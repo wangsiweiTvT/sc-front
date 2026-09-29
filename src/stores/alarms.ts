@@ -28,8 +28,11 @@ export function useAlarmsStore() {
   async function push(records: AlarmRecord[]): Promise<void> {
     if (records.length === 0) return
     await alarmApi.appendAlarms(records)
+    const start = state.records.length
     state.records.push(...records)
-    for (const record of records) {
+    for (let i = 0; i < records.length; i++) {
+      // 从响应式数组取回代理对象:sendSms 落定时经代理写入,表格单元格才能随之更新
+      const record = state.records[start + i]!
       const deviceName = DEVICES.find((d) => d.id === record.deviceId)?.name ?? record.deviceId
       sendSms(record, {
         receivers: settings.state.receivers,

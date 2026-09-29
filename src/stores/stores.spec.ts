@@ -52,6 +52,23 @@ describe('monitor + alarms 集成', () => {
     monitor.stop()
   })
 
+  it('短信落定经响应式代理生效(告警表格单元格随之更新)', async () => {
+    const { monitor, alarms, settings, simulator } = await freshStores()
+    await monitor.init()
+    await settings.addReceiver('测试员', '13800000000')
+    // 模拟表格单元格:effect 跟踪 sms.status 的读取;落定后必须再触发一次
+    const { effect } = await import('vue')
+    const seen: string[] = []
+    effect(() => {
+      seen.push(alarms.state.records[0]?.sms.status ?? 'none')
+    })
+    simulator.forceAbnormal('Di-Jiu-Shui-Chang-1', 'Vf', 60_000, 'high')
+    await vi.advanceTimersByTimeAsync(2_000)
+    await vi.advanceTimersByTimeAsync(1_000)
+    expect(seen[seen.length - 1]).toBe('sent')
+    monitor.stop()
+  })
+
   it('冷却期内同一越界不重复生成告警', async () => {
     const { monitor, alarms, simulator } = await freshStores()
     await monitor.init()
