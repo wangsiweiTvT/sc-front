@@ -4,7 +4,8 @@ import './style.css'
 import { createApp } from 'vue'
 import ElementPlus from 'element-plus'
 import App from './App.vue'
+import { router } from './router'
 
 document.documentElement.classList.add('dark')
 
-createApp(App).use(ElementPlus).mount('#app')
+createApp(App).use(ElementPlus).use(router).mount('#app')
