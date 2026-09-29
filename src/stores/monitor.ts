@@ -1,0 +1,97 @@
+import { computed, reactive } from 'vue'
+import type { Device, DeviceId, DeviceStatusInfo, RealtimeSnapshot, Reading } from '@/api/types'
+import { deviceApi } from '@/api/deviceApi'
+import { monitorApi } from '@/api/monitorApi'
+import { judgeDeviceStatus } from '@/core/statusRule'
+import { detectAlarms } from '@/core/alarmEngine'
+import { POLL_INTERVAL_MS } from '@/config/params'
+import { useAlarmsStore } from './alarms'
+import { useSettingsStore } from './settings'
+
+interface MonitorState {
+  inited: boolean
+  devices: Device[]
+  readings: Record<string, Reading | null>
+  statuses: Record<string, DeviceStatusInfo>
+  forcedOffline: DeviceId[]
+  timer: number | null
+  lastRefreshAt: number | null
+}
+
+const state = reactive<MonitorState>({
+  inited: false,
+  devices: [],
+  readings: {},
+  statuses: {},
+  forcedOffline: [],
+  timer: null,
+  lastRefreshAt: null,
+})
+
+export function useMonitorStore() {
+  const settings = useSettingsStore()
+  const alarms = useAlarmsStore()
+
+  async function refresh(): Promise<void> {
+    if (state.devices.length === 0) return
+    const snap: RealtimeSnapshot = await monitorApi.getRealtimeReadings()
+    state.readings = snap.readings
+    state.forcedOffline = snap.forcedOffline
+    state.lastRefreshAt = snap.now
+    for (const device of state.devices) {
+      const info = judgeDeviceStatus({
+        latestReading: snap.readings[device.id] ?? null,
+        now: snap.now,
+        rules: settings.rulesFor(device.id),
+      })
+      const prev = state.statuses[device.id]?.status ?? null
+      const fresh = detectAlarms({
+        deviceId: device.id,
+        prevStatus: prev,
+        statusInfo: info,
+        now: snap.now,
+        existingAlarms: alarms.state.records,
+      })
+      state.statuses[device.id] = info
+      if (fresh.length > 0) await alarms.push(fresh)
+    }
+  }
+
+  async function init(): Promise<void> {
+    if (state.inited) return
+    state.inited = true
+    state.devices = await deviceApi.getDevices()
+    await settings.init()
+    await alarms.init()
+    await refresh()
+    state.timer = window.setInterval(() => {
+      void refresh()
+    }, POLL_INTERVAL_MS)
+  }
+
+  function stop(): void {
+    if (state.timer !== null) {
+      clearInterval(state.timer)
+      state.timer = null
+    }
+  }
+
+  async function toggleOffline(deviceId: DeviceId): Promise<void> {
+    const target = !state.forcedOffline.includes(deviceId)
+    await monitorApi.setDeviceOffline(deviceId, target)
+    state.forcedOffline = target
+      ? [...state.forcedOffline, deviceId]
+      : state.forcedOffline.filter((id) => id !== deviceId)
+  }
+
+  const statusCounts = computed(() => {
+    const counts = { online: 0, offline: 0, abnormal: 0 }
+    for (const device of state.devices) {
+      const s = state.statuses[device.id]?.status
+      if (s === 'online' || s === 'offline' || s === 'abnormal') counts[s] += 1
+    }
+    return counts
+  })
+
+  return { state, init, refresh, stop, toggleOffline, statusCounts }
+}
