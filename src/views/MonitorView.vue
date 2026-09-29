@@ -3,6 +3,7 @@ import { onMounted, ref } from 'vue'
 import type { Device } from '@/api/types'
 import { useMonitorStore } from '@/stores/monitor'
 import DeviceCard from '@/components/DeviceCard.vue'
+import DeviceDrawer from '@/components/DeviceDrawer.vue'
 
 const monitor = useMonitorStore()
 const selected = ref<Device | null>(null)
@@ -33,8 +34,6 @@ function open(device: Device): void {
       />
     </div>
 
-    <el-drawer v-model="drawerVisible" :title="selected?.name" size="520px">
-      <div class="sc-dim">{{ selected?.clientId }}(详情抽屉于下一任务接入)</div>
-    </el-drawer>
+    <DeviceDrawer v-model="drawerVisible" :device="selected" />
   </div>
 </template>
