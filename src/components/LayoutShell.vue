@@ -36,7 +36,7 @@ function go(name: string): void {
     <el-header height="64px" class="flex items-center justify-between border-b border-[var(--sc-border)]">
       <div class="flex items-center gap-6">
         <span class="text-xl font-semibold tracking-wide whitespace-nowrap">九厂一期工艺参数监控</span>
-        <el-menu mode="horizontal" :default-active="activeMenu" class="!border-b-0" @select="go">
+        <el-menu mode="horizontal" :ellipsis="false" :default-active="activeMenu" class="!border-b-0" @select="go">
           <el-menu-item index="monitor">实时监控</el-menu-item>
           <el-menu-item index="alarms">告警记录</el-menu-item>
           <el-menu-item index="settings">阈值配置</el-menu-item>
