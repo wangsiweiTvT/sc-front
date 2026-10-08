@@ -1,5 +1,6 @@
 import type { AlarmRecord } from './types'
 import { request } from './http'
+import { alarmFromPayload, alarmToPayload, type AlarmPayload } from './adapters'
 import { loadJSON, saveJSON, STORAGE_KEYS } from '@/mock/memory'
 import { ALARM_MAX_COUNT } from '@/config/params'
 
@@ -8,7 +9,8 @@ const useMock = (import.meta.env.VITE_USE_MOCK ?? 'true') !== 'false'
 export const alarmApi = {
   async getAlarms(): Promise<AlarmRecord[]> {
     if (useMock) return loadJSON<AlarmRecord[]>(STORAGE_KEYS.alarms, [])
-    return request<AlarmRecord[]>('/alarms')
+    const payloads = await request<AlarmPayload[]>('/api/alarms')
+    return payloads.map(alarmFromPayload)
   },
 
   async appendAlarms(records: AlarmRecord[]): Promise<void> {
@@ -17,7 +19,7 @@ export const alarmApi = {
       saveJSON(STORAGE_KEYS.alarms, all.slice(-ALARM_MAX_COUNT))
       return
     }
-    return request<void>('/alarms')
+    await request<void>('/api/alarms', { method: 'POST', body: records.map(alarmToPayload) })
   },
 
   async updateAlarm(record: AlarmRecord): Promise<void> {
@@ -26,7 +28,7 @@ export const alarmApi = {
       saveJSON(STORAGE_KEYS.alarms, all)
       return
     }
-    return request<void>(`/alarms/${record.id}`)
+    await request<void>(`/api/alarms/${record.id}`, { method: 'PUT', body: alarmToPayload(record) })
   },
 
   async clearAlarms(): Promise<void> {
@@ -34,6 +36,6 @@ export const alarmApi = {
       saveJSON(STORAGE_KEYS.alarms, [])
       return
     }
-    return request<void>('/alarms')
+    await request<void>('/api/alarms', { method: 'DELETE' })
   },
 }

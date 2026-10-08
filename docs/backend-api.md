@@ -228,3 +228,20 @@ curl -s http://127.0.0.1:8000/api/thresholds
 ```
 
 前端接入方式(前端侧工作,不由后端做):`.env.local` 设 `VITE_USE_MOCK=false` 与 `VITE_API_BASE=http://127.0.0.1:8000`,前端在 `src/api/http.ts` 统一发起请求并做 §3 的字段转换。
+
+## 6. 后端确认(v1,2026-10-08)
+
+后端已按本文档实现并通过 §5 全部七条验收(仓库 commit `62122fb`,api.py v0.2.0)。逐项确认:
+
+- **§4.1 CORS** ✓ 已加(允许 `localhost:5173` 与 `127.0.0.1:5173`),验收命令返回 `access-control-allow-origin`。
+- **§4.2 告警存储** ✓ 四操作全部实现。POST 批量追加按 id upsert,追加后自动裁剪保留最新 500 条(已实测 505→500,最旧的被裁);PUT 按 id upsert 始终 200;DELETE 清空;GET 按追加顺序返回。记录 JSON 原样存 `alarms.payload`(MySQL JSON 列),后端不解析字段含义。
+- **§4.3 阈值规则** ✓ 空表 GET 返回代码默认 24 条(low/high 与 §4.3 默认表一致,enabled 全 true);PUT 校验字段(deviceId/paramKey/low/high 缺失或非数字返回 400),事务内整体覆盖。注:此表未来兼作二期后端检测器的配置源,结构不变。
+- **§4.4 实时快照** ✓ 已实现。返回 `Di-Jiu-Shui-Chang-1..4` **加上 sensor_data 中出现过的其他设备**(当前库里有一台历史测试设备 `Di-Er-Shui-Chang-2` 也会出现在快照里,忽略即可),无数据为 null,含 `server_time`。
+- **§4.5 接收人** ✓ id 服务端生成,格式 `rcv-<8 位十六进制>`;POST 返回完整对象;手机号后端兜底校验 `^1\d{10}$`(不合法返回 422);DELETE 幂等。
+- **§4.6 simulate-offline** ✓ 空实现返回 `200 {}`。
+- **§2.2 settling_ratio 问题答复**:`vf` 是权威列。发布端代码里 `Vf`(沉降比)是必发字段,`settling_ratio` 是可选补充参数(设备不携带时为 NULL),两者同单位。前端 v1 只消费 `vf` 是对的。
+- **§2.3/§2.5 说明**:v1 告警判定在前端、后端只存储,按本文档执行;二期把判定+真实短信移到后端时,`thresholds` 表直接复用,前端无需变更接口。
+
+对接期间接口若有字段/行为出入,在本节下追加条目沟通。
+
+- **前端接入确认(v1,2026-10-08)**:前端已实现真实分支(http 层 + `src/api/adapters.ts` 字段适配),`.env.local` 设 `VITE_USE_MOCK=false` + `VITE_API_BASE=http://127.0.0.1:8000` 后冒烟通过——readings/latest 快照(正确忽略 `Di-Er-Shui-Chang-2`)、CORS、thresholds 默认表、alarms/receivers 空表 GET 均正常;测试套件 75/75,构建通过。注:1# 当前实测 Vf=2.0 低于阈值下限 5,页面按设计显示"异常"并生成告警,属真实数据下的预期行为。

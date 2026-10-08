@@ -20,5 +20,7 @@ export default defineConfig({
   test: {
     environment: 'happy-dom',
     include: ['src/**/*.spec.ts'],
+    // .env.local(含 VITE_USE_MOCK=false)对测试模式同样生效,这里钉回 mock:套件不依赖本机 env
+    env: { VITE_USE_MOCK: 'true' },
   },
 })

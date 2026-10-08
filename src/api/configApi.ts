@@ -10,7 +10,7 @@ let receiverSeq = 0
 export const configApi = {
   async getThresholds(): Promise<ThresholdRule[]> {
     if (useMock) return loadJSON<ThresholdRule[]>(STORAGE_KEYS.thresholds, defaultThresholds())
-    return request<ThresholdRule[]>('/thresholds')
+    return request<ThresholdRule[]>('/api/thresholds')
   },
 
   async saveThresholds(rules: ThresholdRule[]): Promise<void> {
@@ -18,12 +18,12 @@ export const configApi = {
       saveJSON(STORAGE_KEYS.thresholds, rules)
       return
     }
-    return request<void>('/thresholds')
+    await request<void>('/api/thresholds', { method: 'PUT', body: rules })
   },
 
   async getReceivers(): Promise<Receiver[]> {
     if (useMock) return loadJSON<Receiver[]>(STORAGE_KEYS.receivers, [])
-    return request<Receiver[]>('/receivers')
+    return request<Receiver[]>('/api/receivers')
   },
 
   async addReceiver(input: { name: string; phone: string }): Promise<Receiver> {
@@ -33,7 +33,7 @@ export const configApi = {
       saveJSON(STORAGE_KEYS.receivers, [...loadJSON<Receiver[]>(STORAGE_KEYS.receivers, []), r])
       return r
     }
-    return request<Receiver>('/receivers')
+    return request<Receiver>('/api/receivers', { method: 'POST', body: input })
   },
 
   async removeReceiver(id: string): Promise<void> {
@@ -41,6 +41,6 @@ export const configApi = {
       saveJSON(STORAGE_KEYS.receivers, loadJSON<Receiver[]>(STORAGE_KEYS.receivers, []).filter((r) => r.id !== id))
       return
     }
-    return request<void>(`/receivers/${id}`)
+    await request<void>(`/api/receivers/${id}`, { method: 'DELETE' })
   },
 }
