@@ -81,11 +81,10 @@ describe('monitor + alarms 集成', () => {
     monitor.stop()
   })
 
-  it('手动模拟离线 → 13 分钟无数据后判离线并产生一条离线告警', async () => {
-    const { monitor, alarms } = await freshStores()
+  it('上报停止 → 13 分钟无数据后判离线并产生一条离线告警', async () => {
+    const { monitor, alarms, simulator } = await freshStores()
     await monitor.init()
-    await monitor.toggleOffline('Di-Jiu-Shui-Chang-2')
-    expect(monitor.state.forcedOffline).toContain('Di-Jiu-Shui-Chang-2')
+    simulator.setManualOffline('Di-Jiu-Shui-Chang-2', true) // 模拟器内部停发,UI 无此入口
     await vi.advanceTimersByTimeAsync(2_000)
     expect(monitor.state.statuses['Di-Jiu-Shui-Chang-2']!.status).toBe('online')
     await vi.advanceTimersByTimeAsync(OFFLINE_AFTER_MS)
@@ -96,11 +95,11 @@ describe('monitor + alarms 集成', () => {
   })
 
   it('恢复上报后状态回到 online 且不产生恢复告警', async () => {
-    const { monitor, alarms } = await freshStores()
+    const { monitor, alarms, simulator } = await freshStores()
     await monitor.init()
-    await monitor.toggleOffline('Di-Jiu-Shui-Chang-3')
+    simulator.setManualOffline('Di-Jiu-Shui-Chang-3', true)
     await vi.advanceTimersByTimeAsync(OFFLINE_AFTER_MS + 2_000)
-    await monitor.toggleOffline('Di-Jiu-Shui-Chang-3')
+    simulator.setManualOffline('Di-Jiu-Shui-Chang-3', false)
     await vi.advanceTimersByTimeAsync(4_000)
     expect(monitor.state.statuses['Di-Jiu-Shui-Chang-3']!.status).toBe('online')
     const recoverAlarms = alarms.state.records.filter((r) => r.deviceId === 'Di-Jiu-Shui-Chang-3')

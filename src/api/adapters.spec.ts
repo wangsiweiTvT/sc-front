@@ -69,14 +69,10 @@ describe('snapshotFromPayload(快照 → RealtimeSnapshot)', () => {
     expect((snap.readings as Record<string, Reading | null>)['Di-Er-Shui-Chang-2']).toBeUndefined()
   })
 
-  it('server_time 转毫秒作为 now;forced_offline 过滤到已知设备', () => {
-    const snap = snapshotFromPayload({
-      server_time: iso,
-      readings: {},
-      forced_offline: ['Di-Jiu-Shui-Chang-2', 'Di-Er-Shui-Chang-9'],
-    })
+  it('server_time 转毫秒作为 now,快照仅含 now 与 readings 两个字段', () => {
+    const snap = snapshotFromPayload({ server_time: iso, readings: {} })
     expect(snap.now).toBe(ms)
-    expect(snap.forcedOffline).toEqual(['Di-Jiu-Shui-Chang-2'])
+    expect(Object.keys(snap).sort()).toEqual(['now', 'readings'])
   })
 
   it('server_time 缺失或不可解析时回退本机时间', () => {

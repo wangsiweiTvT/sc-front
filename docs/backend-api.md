@@ -90,7 +90,7 @@
 | **必做** | 短信接收人 | `GET/POST/DELETE /api/receivers` | 新增 |
 | 可选 | 4 台最新聚合 | `GET /api/readings/latest` | 新增(不加则前端用 4×`/latest`) |
 | 可选 | 设备静态档案 | 扩展 `GET /api/devices` | 新增(v1 前端本地档案,不需要) |
-| 可选 | 演示用离线开关 | `POST /api/devices/{id}/simulate-offline` | 新增(空实现即可) |
+| ~~可选~~ | ~~演示用离线开关~~ | ~~`POST /api/devices/{id}/simulate-offline`~~ | 前端"模拟离线"按钮已于 2026-10-08 移除,该接口不再有消费者(后端可留可删) |
 | 已有 | 历史曲线 | `GET /api/devices/{device_id}/data` | 零改动 ✓ |
 | 已有 | 单设备最新 | `GET /api/devices/{device_id}/latest` | 零改动 ✓(绕行方案使用) |
 
@@ -209,7 +209,7 @@ curl -s -X DELETE http://127.0.0.1:8000/api/receivers/rcv-1
 ### 4.6 其余可选
 
 - **设备静态档案**:v1 前端用本地档案(name/model/location/manager/image 等),后端无需提供;将来若要后端管理,在现有 `GET /api/devices` 响应里补静态字段即可,前端届时切换。
-- **演示用离线开关**:`POST /api/devices/{id}/simulate-offline` —— 仅用于演示"手动置离线"按钮,v1 后端返回 `200 {}` 空实现即可(前端本地表现),无持久化要求。
+- **演示用离线开关**(已废弃):v1 原为页面"模拟离线"按钮预留,前端已于 2026-10-08 移除该按钮——离线判定完全由"13 分钟无新数据"驱动,无人工入口。后端的空实现接口保留或删除均可,前端不再调用。
 
 ## 5. 验收自测清单(全部通过即对接就绪)
 
@@ -243,5 +243,7 @@ curl -s http://127.0.0.1:8000/api/thresholds
 - **§2.3/§2.5 说明**:v1 告警判定在前端、后端只存储,按本文档执行;二期把判定+真实短信移到后端时,`thresholds` 表直接复用,前端无需变更接口。
 
 对接期间接口若有字段/行为出入,在本节下追加条目沟通。
+
+- **前端变更(2026-10-08)**:页面"模拟离线"按钮及前端 `toggleOffline`/`setDeviceOffline` 已彻底移除,快照模型不再含 `forcedOffline` 字段(后端快照本就未返回 `forced_offline`,无影响);`simulate-offline` 接口不再有前端消费者,保留或删除均可。离线告警链路仍由前端判定并测试覆盖(13 分钟无数据 → critical 告警)。
 
 - **前端接入确认(v1,2026-10-08)**:前端已实现真实分支(http 层 + `src/api/adapters.ts` 字段适配),`.env.local` 设 `VITE_USE_MOCK=false` + `VITE_API_BASE=http://127.0.0.1:8000` 后冒烟通过——readings/latest 快照(正确忽略 `Di-Er-Shui-Chang-2`)、CORS、thresholds 默认表、alarms/receivers 空表 GET 均正常;测试套件 75/75,构建通过。注:1# 当前实测 Vf=2.0 低于阈值下限 5,页面按设计显示"异常"并生成告警,属真实数据下的预期行为。

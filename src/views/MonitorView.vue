@@ -28,9 +28,7 @@ function open(device: Device): void {
         :device="device"
         :reading="monitor.state.readings[device.id] ?? null"
         :status-info="monitor.state.statuses[device.id]"
-        :forced-offline="monitor.state.forcedOffline.includes(device.id)"
         @open="open(device)"
-        @toggle-offline="monitor.toggleOffline(device.id)"
       />
     </div>
 

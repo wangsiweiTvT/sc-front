@@ -8,9 +8,6 @@ const useMock = (import.meta.env.VITE_USE_MOCK ?? 'true') !== 'false'
 
 let started = false
 
-/** 真实模式下的"手动置离线"演示状态(契约 §4.6:前端本地表现,无持久化) */
-const manualOffline = new Set<DeviceId>()
-
 export const monitorApi = {
   async getRealtimeReadings(): Promise<RealtimeSnapshot> {
     if (useMock) {
@@ -22,17 +19,9 @@ export const monitorApi = {
       simulator.tick(now)
       const latest = simulator.latest()
       const readings = Object.fromEntries(DEVICE_IDS.map((id) => [id, latest[id] ?? null])) as RealtimeSnapshot['readings']
-      return {
-        now,
-        readings,
-        forcedOffline: DEVICE_IDS.filter((id) => simulator.isManuallyOffline(id)),
-      }
+      return { now, readings }
     }
-    const snapshot = snapshotFromPayload(await request<SnapshotPayload>('/api/readings/latest'))
-    for (const id of manualOffline) {
-      if (!snapshot.forcedOffline.includes(id)) snapshot.forcedOffline.push(id)
-    }
-    return snapshot
+    return snapshotFromPayload(await request<SnapshotPayload>('/api/readings/latest'))
   },
 
   async getHistory(deviceId: DeviceId, paramKey: ParamKey): Promise<Reading[]> {
@@ -43,14 +32,5 @@ export const monitorApi = {
     return rows
       .map(readingFromRow)
       .filter((r): r is Reading => r !== null && r.params[paramKey] !== undefined)
-  },
-
-  async setDeviceOffline(deviceId: DeviceId, offline: boolean): Promise<void> {
-    if (useMock) {
-      simulator.setManualOffline(deviceId, offline)
-      return
-    }
-    if (offline) manualOffline.add(deviceId)
-    else manualOffline.delete(deviceId)
   },
 }

@@ -18,7 +18,6 @@ export interface SensorRow {
 export interface SnapshotPayload {
   server_time?: string
   readings: Record<string, SensorRow | null>
-  forced_offline?: string[]
 }
 
 /** 后端存储的告警记录(§4.2:前端 JSON 原样存取,snake_case + 毫秒时间戳) */
@@ -64,10 +63,7 @@ export function snapshotFromPayload(payload: SnapshotPayload): RealtimeSnapshot 
       return [id, row ? readingFromRow(row) : null]
     }),
   ) as RealtimeSnapshot['readings']
-  const forcedOffline = (payload.forced_offline ?? []).filter((id): id is DeviceId =>
-    (DEVICE_IDS as string[]).includes(id),
-  )
-  return { now: Number.isNaN(parsed) ? Date.now() : parsed, readings, forcedOffline }
+  return { now: Number.isNaN(parsed) ? Date.now() : parsed, readings }
 }
 
 export function alarmToPayload(record: AlarmRecord): AlarmPayload {

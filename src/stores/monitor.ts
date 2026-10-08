@@ -1,5 +1,5 @@
 import { computed, reactive } from 'vue'
-import type { Device, DeviceId, DeviceStatusInfo, RealtimeSnapshot, Reading } from '@/api/types'
+import type { Device, DeviceStatusInfo, RealtimeSnapshot, Reading } from '@/api/types'
 import { deviceApi } from '@/api/deviceApi'
 import { monitorApi } from '@/api/monitorApi'
 import { judgeDeviceStatus } from '@/core/statusRule'
@@ -13,7 +13,6 @@ interface MonitorState {
   devices: Device[]
   readings: Record<string, Reading | null>
   statuses: Record<string, DeviceStatusInfo>
-  forcedOffline: DeviceId[]
   timer: number | null
   lastRefreshAt: number | null
 }
@@ -23,7 +22,6 @@ const state = reactive<MonitorState>({
   devices: [],
   readings: {},
   statuses: {},
-  forcedOffline: [],
   timer: null,
   lastRefreshAt: null,
 })
@@ -36,7 +34,6 @@ export function useMonitorStore() {
     if (state.devices.length === 0) return
     const snap: RealtimeSnapshot = await monitorApi.getRealtimeReadings()
     state.readings = snap.readings
-    state.forcedOffline = snap.forcedOffline
     state.lastRefreshAt = snap.now
     for (const device of state.devices) {
       const info = judgeDeviceStatus({
@@ -76,14 +73,6 @@ export function useMonitorStore() {
     }
   }
 
-  async function toggleOffline(deviceId: DeviceId): Promise<void> {
-    const target = !state.forcedOffline.includes(deviceId)
-    await monitorApi.setDeviceOffline(deviceId, target)
-    state.forcedOffline = target
-      ? [...state.forcedOffline, deviceId]
-      : state.forcedOffline.filter((id) => id !== deviceId)
-  }
-
   const statusCounts = computed(() => {
     const counts = { online: 0, offline: 0, abnormal: 0 }
     for (const device of state.devices) {
@@ -93,5 +82,5 @@ export function useMonitorStore() {
     return counts
   })
 
-  return { state, init, refresh, stop, toggleOffline, statusCounts }
+  return { state, init, refresh, stop, statusCounts }
 }

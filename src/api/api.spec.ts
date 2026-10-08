@@ -52,17 +52,10 @@ describe('alarmApi', () => {
 })
 
 describe('monitorApi', () => {
-  it('getRealtimeReadings 返回 4 台 latest + forcedOffline', async () => {
+  it('getRealtimeReadings 返回 4 台 latest', async () => {
     const snap = await monitorApi.getRealtimeReadings()
     expect(Object.keys(snap.readings)).toHaveLength(4)
-    expect(snap.forcedOffline).toEqual([])
     expect(snap.now).toBeGreaterThan(0)
-  })
-
-  it('setDeviceOffline 生效并反映在 forcedOffline', async () => {
-    await monitorApi.setDeviceOffline('Di-Jiu-Shui-Chang-3', true)
-    const snap = await monitorApi.getRealtimeReadings()
-    expect(snap.forcedOffline).toEqual(['Di-Jiu-Shui-Chang-3'])
   })
 
   it('getHistory 返回该参数的历史点', async () => {

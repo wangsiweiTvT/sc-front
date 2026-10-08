@@ -9,10 +9,9 @@ const props = defineProps<{
   device: Device
   reading: Reading | null
   statusInfo: DeviceStatusInfo | undefined
-  forcedOffline: boolean
 }>()
 
-defineEmits<{ open: []; toggleOffline: [] }>()
+defineEmits<{ open: [] }>()
 
 const agoText = computed(() => {
   if (!props.reading) return '暂无数据'
@@ -50,18 +49,8 @@ function violationFor(key: ParamKey) {
       </div>
     </div>
 
-    <div class="flex items-center justify-between text-xs">
+    <div class="text-xs">
       <span class="sc-dim">最近上报:{{ agoText }}</span>
-      <el-tooltip content="停止该设备模拟上报;离线判定为 13 分钟无数据,到点后状态切换" placement="top">
-        <el-button
-          size="small"
-          :type="forcedOffline ? 'success' : 'warning'"
-          plain
-          @click.stop="$emit('toggleOffline')"
-        >
-          {{ forcedOffline ? '恢复上报' : '模拟离线' }}
-        </el-button>
-      </el-tooltip>
     </div>
   </div>
 </template>

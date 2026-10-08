@@ -64,7 +64,7 @@ describe('VITE_USE_MOCK=false 时的真实分支接线', () => {
     expect(fetchMock).not.toHaveBeenCalled()
   })
 
-  it('monitorApi.getRealtimeReadings 映射快照;手动离线演示状态并入 forcedOffline 且不打后端', async () => {
+  it('monitorApi.getRealtimeReadings 映射快照,忽略四台之外的设备', async () => {
     const fetchMock = fetchOf(async () =>
       jsonResponse({
         server_time: iso,
@@ -79,7 +79,6 @@ describe('VITE_USE_MOCK=false 时的真实分支接线', () => {
     )
     vi.stubGlobal('fetch', fetchMock)
     const { monitorApi } = await importReal(() => import('./monitorApi'))
-    await monitorApi.setDeviceOffline('Di-Jiu-Shui-Chang-4', true)
     const snap = await monitorApi.getRealtimeReadings()
     expect(snap.now).toBe(ms)
     expect(snap.readings['Di-Jiu-Shui-Chang-1']!.params).toEqual({
@@ -87,8 +86,7 @@ describe('VITE_USE_MOCK=false 时的真实分支接线', () => {
     })
     expect(snap.readings['Di-Jiu-Shui-Chang-4']).toBeNull()
     expect((snap.readings as Record<string, Reading | null>)['Di-Er-Shui-Chang-2']).toBeUndefined()
-    expect(snap.forcedOffline).toEqual(['Di-Jiu-Shui-Chang-4'])
-    expect(fetchMock).toHaveBeenCalledTimes(1) // 仅快照一次,开关是纯前端状态
+    expect(fetchMock).toHaveBeenCalledTimes(1)
   })
 
   it('monitorApi.getHistory 走 /data 并把行映射为 Reading', async () => {

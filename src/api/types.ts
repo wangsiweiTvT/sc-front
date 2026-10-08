@@ -89,6 +89,4 @@ export interface ParamMeta {
 export interface RealtimeSnapshot {
   now: number
   readings: Record<DeviceId, Reading | null>
-  /** 手动"模拟离线"中的设备(按钮状态展示用) */
-  forcedOffline: DeviceId[]
 }
