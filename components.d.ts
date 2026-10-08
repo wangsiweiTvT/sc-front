@@ -12,6 +12,7 @@ export {}
 declare module 'vue' {
   export interface GlobalComponents {
     AlarmBell: typeof import('./src/components/AlarmBell.vue')['default']
+    DetectorStatus: typeof import('./src/components/DetectorStatus.vue')['default']
     DeviceCard: typeof import('./src/components/DeviceCard.vue')['default']
     DeviceDrawer: typeof import('./src/components/DeviceDrawer.vue')['default']
     ElBadge: typeof import('element-plus/es')['ElBadge']

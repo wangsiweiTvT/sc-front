@@ -46,6 +46,10 @@ export const OFFLINE_AFTER_MS = 13 * 60_000
 export const ALARM_COOLDOWN_MS = 600_000
 /** 模拟数据刷新周期 */
 export const POLL_INTERVAL_MS = 2_000
+/** 告警列表轮询周期(判定在后端检测器,前端拉取刷新) */
+export const ALARM_POLL_INTERVAL_MS = 30_000
+/** 检测器状态轮询周期 */
+export const DETECTOR_POLL_INTERVAL_MS = 60_000
 /** 告警记录持久化上限,超出丢弃最旧 */
 export const ALARM_MAX_COUNT = 500
 

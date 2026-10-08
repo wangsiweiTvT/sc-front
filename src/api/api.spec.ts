@@ -3,7 +3,7 @@ import { alarmApi } from './alarmApi'
 import { configApi } from './configApi'
 import { monitorApi } from './monitorApi'
 import { deviceApi } from './deviceApi'
-import { STORAGE_KEYS } from '@/mock/memory'
+import { loadJSON, saveJSON, STORAGE_KEYS } from '@/mock/memory'
 import { DEVICES } from '@/config/params'
 import type { AlarmRecord } from './types'
 
@@ -34,20 +34,17 @@ describe('configApi', () => {
 })
 
 describe('alarmApi', () => {
-  const record: AlarmRecord = {
-    id: 'a1', time: 1_700_000_000_000, deviceId: 'Di-Jiu-Shui-Chang-1',
-    paramKey: 'Vf', type: 'high', value: 38, threshold: 35, level: 'warning',
-    sms: { status: 'pending', receivers: [] },
-  }
-
-  it('append → get → update → clear', async () => {
-    await alarmApi.appendAlarms([record])
-    expect((await alarmApi.getAlarms())).toHaveLength(1)
-    const updated = { ...record, sms: { status: 'sent' as const, receivers: ['138'], sentAt: 1 } }
-    await alarmApi.updateAlarm(updated)
-    expect((await alarmApi.getAlarms())[0]!.sms.status).toBe('sent')
+  it('get → clear(mock:种数据 → 读回 → 清空)', async () => {
+    const record: AlarmRecord = {
+      id: 'alarm-1', time: 1728355600000, deviceId: 'Di-Jiu-Shui-Chang-1',
+      paramKey: null, type: 'offline', value: null, threshold: null,
+      level: 'critical', sms: { status: 'sent', receivers: ['138'] },
+    }
+    saveJSON(STORAGE_KEYS.alarms, [record])
+    expect(await alarmApi.getAlarms()).toHaveLength(1)
     await alarmApi.clearAlarms()
     expect(await alarmApi.getAlarms()).toEqual([])
+    expect(loadJSON<AlarmRecord[]>(STORAGE_KEYS.alarms, [{ id: 'x' } as AlarmRecord])).toEqual([])
   })
 })
 

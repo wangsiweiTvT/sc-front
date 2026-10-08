@@ -2,6 +2,7 @@ export const STORAGE_KEYS = {
   thresholds: 'sc-front:thresholds',
   receivers: 'sc-front:receivers',
   alarms: 'sc-front:alarms',
+  alarmReadAt: 'sc-front:alarm-read-at',
 } as const
 
 /** 读取失败(禁用/损坏)时返回 fallback,绝不抛错 */

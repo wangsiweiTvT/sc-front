@@ -18,7 +18,7 @@ async function saveAll(): Promise<void> {
     return
   }
   await settings.save()
-  ElMessage.success('阈值配置已保存并生效')
+  ElMessage.success('阈值配置已保存,后端检测器约 10 秒内采纳')
 }
 
 const dialogVisible = ref(false)
@@ -35,7 +35,7 @@ async function submitReceiver(): Promise<void> {
     return
   }
   await settings.addReceiver(name, form.value.phone)
-  ElMessage.success('接收人已添加')
+  ElMessage.success('接收人已添加,新告警短信约 10 秒内按新名单发送')
   dialogVisible.value = false
   form.value = { name: '', phone: '' }
 }
@@ -49,7 +49,7 @@ async function removeReceiver(id: string): Promise<void> {
 <template>
   <div>
     <div class="mb-4 flex items-center justify-between">
-      <span class="sc-dim text-sm">修改后点击"保存"生效;判定周期 2 秒,即时应用于状态与告警。</span>
+      <span class="sc-dim text-sm">修改后点击"保存"生效;告警判定由后端检测器执行(约 10 秒采纳),设备状态角标按新阈值即时展示。</span>
       <el-button type="primary" @click="saveAll">保存</el-button>
     </div>
 

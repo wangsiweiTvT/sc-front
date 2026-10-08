@@ -20,7 +20,7 @@ export interface SnapshotPayload {
   readings: Record<string, SensorRow | null>
 }
 
-/** 后端存储的告警记录(§4.2:前端 JSON 原样存取,snake_case + 毫秒时间戳) */
+/** 后端存储的告警记录(§4.2:后端原样存取,snake_case + 毫秒时间戳;判定移交后,前端只读) */
 export interface AlarmPayload {
   id: string
   time: number
@@ -64,22 +64,6 @@ export function snapshotFromPayload(payload: SnapshotPayload): RealtimeSnapshot 
     }),
   ) as RealtimeSnapshot['readings']
   return { now: Number.isNaN(parsed) ? Date.now() : parsed, readings }
-}
-
-export function alarmToPayload(record: AlarmRecord): AlarmPayload {
-  const sms: AlarmPayload['sms'] = { status: record.sms.status, receivers: [...record.sms.receivers] }
-  if (record.sms.sentAt !== undefined) sms.sent_at = record.sms.sentAt
-  return {
-    id: record.id,
-    time: record.time,
-    device_id: record.deviceId,
-    param_key: record.paramKey,
-    type: record.type,
-    value: record.value,
-    threshold: record.threshold,
-    level: record.level,
-    sms,
-  }
 }
 
 export function alarmFromPayload(payload: AlarmPayload): AlarmRecord {

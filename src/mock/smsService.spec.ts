@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { buildSmsText, sendSms } from './smsService'
+import { sendSms } from './smsService'
 import type { AlarmRecord, Receiver } from '@/api/types'
 
 const T0 = 1_700_000_000_000
@@ -15,32 +15,10 @@ function highAlarm(): AlarmRecord {
   }
 }
 
-function offlineAlarm(): AlarmRecord {
-  return {
-    id: 'a2', time: T0, deviceId: 'Di-Jiu-Shui-Chang-1', paramKey: null, type: 'offline',
-    value: null, threshold: null, level: 'critical', sms: { status: 'pending', receivers: [] },
-  }
-}
-
 beforeEach(() => vi.useFakeTimers({ now: T0 }))
 afterEach(() => vi.useRealTimers())
 
-describe('buildSmsText', () => {
-  it('超上限文案含设备名、参数、值、方向与阈值', () => {
-    const text = buildSmsText(highAlarm(), '九厂一期-1#')
-    expect(text).toContain('九厂一期-1#')
-    expect(text).toContain('沉降比')
-    expect(text).toContain('38.3')
-    expect(text).toContain('超上限')
-    expect(text).toContain('35')
-  })
-
-  it('离线文案', () => {
-    expect(buildSmsText(offlineAlarm(), '九厂一期-1#')).toContain('设备离线')
-  })
-})
-
-describe('sendSms', () => {
+describe('sendSms(模拟短信,仅 mock 检测器使用)', () => {
   it('有接收人:pending → 延迟后 sent,记录接收人与 sentAt', () => {
     const record = highAlarm()
     const settled: AlarmRecord[] = []

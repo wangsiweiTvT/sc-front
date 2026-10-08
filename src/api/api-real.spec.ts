@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { DEVICES } from '@/config/params'
-import type { AlarmRecord, Reading } from './types'
+import type { Reading } from './types'
 
 function jsonResponse(body: unknown, status = 200): Response {
   return new Response(JSON.stringify(body), { status })
@@ -130,28 +130,22 @@ describe('VITE_USE_MOCK=false 时的真实分支接线', () => {
     ])
   })
 
-  it('alarmApi.appendAlarms 以 POST 数组提交 snake_case 记录', async () => {
-    const fetchMock = fetchOf(async () => jsonResponse({}))
-    vi.stubGlobal('fetch', fetchMock)
-    const { alarmApi } = await importReal(() => import('./alarmApi'))
-    const record: AlarmRecord = {
-      id: 'alarm-1', time: 1, deviceId: 'Di-Jiu-Shui-Chang-1',
-      paramKey: null, type: 'offline', value: null, threshold: null,
-      level: 'critical', sms: { status: 'pending', receivers: [] },
-    }
-    await alarmApi.appendAlarms([record])
-    expect(fetchMock).toHaveBeenCalledWith(
-      'http://127.0.0.1:8000/api/alarms',
-      expect.objectContaining({ method: 'POST' }),
+  it('detectorApi.getStatus 映射 /api/detector/status', async () => {
+    vi.stubGlobal(
+      'fetch',
+      fetchOf(async () => jsonResponse({ running: true, last_scan_at: iso, scans_count: 42 })),
     )
-    const init = fetchMock.mock.calls[0]![1] as RequestInit
-    expect(JSON.parse(init.body as string)).toEqual([
-      {
-        id: 'alarm-1', time: 1, device_id: 'Di-Jiu-Shui-Chang-1',
-        param_key: null, type: 'offline', value: null, threshold: null,
-        level: 'critical', sms: { status: 'pending', receivers: [] },
-      },
-    ])
+    const { detectorApi } = await importReal(() => import('./detectorApi'))
+    await expect(detectorApi.getStatus()).resolves.toEqual({ running: true, lastScanAt: ms, scansCount: 42 })
+  })
+
+  it('detectorApi.getStatus:last_scan_at 为 null → lastScanAt null', async () => {
+    vi.stubGlobal(
+      'fetch',
+      fetchOf(async () => jsonResponse({ running: false, last_scan_at: null, scans_count: 0 })),
+    )
+    const { detectorApi } = await importReal(() => import('./detectorApi'))
+    await expect(detectorApi.getStatus()).resolves.toEqual({ running: false, lastScanAt: null, scansCount: 0 })
   })
 
   it('configApi.getThresholds 透传 camelCase;addReceiver POST {name, phone} 返回服务端 id', async () => {

@@ -3,7 +3,6 @@ import type { Device, DeviceStatusInfo, RealtimeSnapshot, Reading } from '@/api/
 import { deviceApi } from '@/api/deviceApi'
 import { monitorApi } from '@/api/monitorApi'
 import { judgeDeviceStatus } from '@/core/statusRule'
-import { detectAlarms } from '@/core/alarmEngine'
 import { POLL_INTERVAL_MS } from '@/config/params'
 import { useAlarmsStore } from './alarms'
 import { useSettingsStore } from './settings'
@@ -30,27 +29,18 @@ export function useMonitorStore() {
   const settings = useSettingsStore()
   const alarms = useAlarmsStore()
 
+  /** 仅计算展示用状态角标;告警判定归后端检测器(§7),前端不再产告警 */
   async function refresh(): Promise<void> {
     if (state.devices.length === 0) return
     const snap: RealtimeSnapshot = await monitorApi.getRealtimeReadings()
     state.readings = snap.readings
     state.lastRefreshAt = snap.now
     for (const device of state.devices) {
-      const info = judgeDeviceStatus({
+      state.statuses[device.id] = judgeDeviceStatus({
         latestReading: snap.readings[device.id] ?? null,
         now: snap.now,
         rules: settings.rulesFor(device.id),
       })
-      const prev = state.statuses[device.id]?.status ?? null
-      const fresh = detectAlarms({
-        deviceId: device.id,
-        prevStatus: prev,
-        statusInfo: info,
-        now: snap.now,
-        existingAlarms: alarms.state.records,
-      })
-      state.statuses[device.id] = info
-      if (fresh.length > 0) await alarms.push(fresh)
     }
   }
 

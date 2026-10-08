@@ -4,6 +4,7 @@ import { useRoute, useRouter } from 'vue-router'
 import dayjs from 'dayjs'
 import { useMonitorStore } from '@/stores/monitor'
 import AlarmBell from './AlarmBell.vue'
+import DetectorStatus from './DetectorStatus.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -43,6 +44,7 @@ function go(name: string): void {
         </el-menu>
       </div>
       <div class="flex items-center gap-5">
+        <DetectorStatus />
         <div class="flex items-center gap-3 text-sm whitespace-nowrap">
           <span class="text-[var(--sc-online)]">在线 {{ counts.online }}</span>
           <span class="text-[var(--sc-offline)]">离线 {{ counts.offline }}</span>

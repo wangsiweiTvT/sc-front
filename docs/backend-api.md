@@ -247,3 +247,20 @@ curl -s http://127.0.0.1:8000/api/thresholds
 - **前端变更(2026-10-08)**:页面"模拟离线"按钮及前端 `toggleOffline`/`setDeviceOffline` 已彻底移除,快照模型不再含 `forcedOffline` 字段(后端快照本就未返回 `forced_offline`,无影响);`simulate-offline` 接口不再有前端消费者,保留或删除均可。离线告警链路仍由前端判定并测试覆盖(13 分钟无数据 → critical 告警)。
 
 - **前端接入确认(v1,2026-10-08)**:前端已实现真实分支(http 层 + `src/api/adapters.ts` 字段适配),`.env.local` 设 `VITE_USE_MOCK=false` + `VITE_API_BASE=http://127.0.0.1:8000` 后冒烟通过——readings/latest 快照(正确忽略 `Di-Er-Shui-Chang-2`)、CORS、thresholds 默认表、alarms/receivers 空表 GET 均正常;测试套件 75/75,构建通过。注:1# 当前实测 Vf=2.0 低于阈值下限 5,页面按设计显示"异常"并生成告警,属真实数据下的预期行为。
+
+## 7. 二期交接:后端接管告警判定与短信(2026-10-08)
+
+后端已上线常驻检测器(独立进程,每 10s 扫描 sensor_data),**告警判定与短信移到后端,浏览器关闭不影响**。判定语义与前端 v1 逐条对齐——严格比较(等于边界不算)、越限 warning / 离线 critical、13 分钟离线边沿触发(检测器重启首轮不报)、(设备,参数,类型) 三元组 10 分钟冷却、500 条裁剪、记录 JSON 结构与 `alarm-<毫秒>-<序号>` id 格式不变——后端仓库 `tests/test_detector.py` 移植了前端 `alarmEngine.spec.ts` 的语义用例,可对照。
+
+**前端需要调整的:**
+
+1. **删除本地判定与短信模拟调用链**(alarmEngine 的 detectAlarms / smsService 的模拟发送):后端已在生成告警,前端再判会出双份记录(两边冷却独立计算)。设备状态角标(在线/异常/离线)可继续前端自算,属展示不算告警。
+2. **告警页/铃铛改轮询**:`GET /api/alarms` 建议 30~60s 拉一次刷新列表与未读数(未读可用"上次已读时间戳之后新增条数"计算);不再需要 POST/PUT 告警,DELETE 清空保留。
+3. **阈值页/接收人页接口照旧**,但现在真正喂给后端检测器,改动约 10s 内生效(不再是前端即时反应,保存后稍等一下再验证)。
+4. 新增 `GET /api/detector/status`:`{"running": bool, "last_scan_at": "...", "scans_count": N}`,60 秒内扫过视为运行中,可用于展示"检测器在线"。
+
+`sms.status` 语义不变(pending→sent/failed + sent_at + receivers 全体接收人),由后端写入;短信当前是 dryrun(日志模拟),阿里云账号下来后后端 `.env` 切 `SMS_PROVIDER=aliyun` 即真实发送,前端无感。
+
+联调验收建议:调低某参数上限 → 10 秒内 GET /api/alarms 出现 warning(无需打开浏览器页面);停 sender 约 13 分钟 → critical 离线告警。
+
+- **前端二期接入确认(2026-10-08)**:本地判定与短信模拟已从前端调用链移除——监控刷新只算状态角标(展示),`alarmEngine`/`smsService` 挪入 `src/mock/` 由模拟检测器复刻后端语义(仅 `VITE_USE_MOCK=true` 演示模式使用);`alarmEngine.spec` 语义用例保留在 mock 层,与后端 `tests/test_detector.py` 同源。告警页/铃铛改为 **30 秒轮询 `GET /api/alarms`**,未读数 = 已读水位(localStorage 持久化)之后新增条数,新告警弹通知;`POST/PUT /api/alarms` 已从前端客户端删除,DELETE 清空保留。已接 `GET /api/detector/status`,顶栏展示"检测器运行中/已停止"(60 秒轮询,接口异常显示为未知而非误报已停止)。阈值/接收人页接口不变,保存成功文案已注明"约 10 秒内生效"。

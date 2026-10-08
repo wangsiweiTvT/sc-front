@@ -1,5 +1,14 @@
 import { describe, expect, it } from 'vitest'
-import { ALARM_COOLDOWN_MS, DEVICES, OFFLINE_AFTER_MS, PARAM_METAS, defaultThresholds } from './params'
+import {
+  ALARM_COOLDOWN_MS,
+  ALARM_POLL_INTERVAL_MS,
+  ALARM_MAX_COUNT,
+  DEVICES,
+  DETECTOR_POLL_INTERVAL_MS,
+  OFFLINE_AFTER_MS,
+  PARAM_METAS,
+  defaultThresholds,
+} from './params'
 
 describe('配置元数据不变式', () => {
   it('共 6 项参数,键唯一', () => {
@@ -33,5 +42,8 @@ describe('配置元数据不变式', () => {
   it('时间常量与上报周期一致', () => {
     expect(OFFLINE_AFTER_MS).toBe(13 * 60_000) // 设备 13 分钟定时上报
     expect(ALARM_COOLDOWN_MS).toBe(600_000)
+    expect(ALARM_POLL_INTERVAL_MS).toBe(30_000) // §7:告警列表 30~60s 轮询
+    expect(DETECTOR_POLL_INTERVAL_MS).toBe(60_000)
+    expect(ALARM_MAX_COUNT).toBe(500)
   })
 })
