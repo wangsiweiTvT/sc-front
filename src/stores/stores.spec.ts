@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { OFFLINE_AFTER_MS } from '@/config/params'
 
 async function freshStores() {
   vi.resetModules()
@@ -80,14 +81,14 @@ describe('monitor + alarms 集成', () => {
     monitor.stop()
   })
 
-  it('手动模拟离线 → 60 秒后判离线并产生一条离线告警', async () => {
+  it('手动模拟离线 → 13 分钟无数据后判离线并产生一条离线告警', async () => {
     const { monitor, alarms } = await freshStores()
     await monitor.init()
     await monitor.toggleOffline('Di-Jiu-Shui-Chang-2')
     expect(monitor.state.forcedOffline).toContain('Di-Jiu-Shui-Chang-2')
     await vi.advanceTimersByTimeAsync(2_000)
     expect(monitor.state.statuses['Di-Jiu-Shui-Chang-2']!.status).toBe('online')
-    await vi.advanceTimersByTimeAsync(60_000)
+    await vi.advanceTimersByTimeAsync(OFFLINE_AFTER_MS)
     expect(monitor.state.statuses['Di-Jiu-Shui-Chang-2']!.status).toBe('offline')
     const offline = alarms.state.records.filter((r) => r.deviceId === 'Di-Jiu-Shui-Chang-2' && r.type === 'offline')
     expect(offline).toHaveLength(1)
@@ -98,7 +99,7 @@ describe('monitor + alarms 集成', () => {
     const { monitor, alarms } = await freshStores()
     await monitor.init()
     await monitor.toggleOffline('Di-Jiu-Shui-Chang-3')
-    await vi.advanceTimersByTimeAsync(62_000)
+    await vi.advanceTimersByTimeAsync(OFFLINE_AFTER_MS + 2_000)
     await monitor.toggleOffline('Di-Jiu-Shui-Chang-3')
     await vi.advanceTimersByTimeAsync(4_000)
     expect(monitor.state.statuses['Di-Jiu-Shui-Chang-3']!.status).toBe('online')

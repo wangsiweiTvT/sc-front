@@ -30,8 +30,8 @@ describe('配置元数据不变式', () => {
     }
   })
 
-  it('时间常量与 spec 一致', () => {
-    expect(OFFLINE_AFTER_MS).toBe(60_000)
+  it('时间常量与上报周期一致', () => {
+    expect(OFFLINE_AFTER_MS).toBe(13 * 60_000) // 设备 13 分钟定时上报
     expect(ALARM_COOLDOWN_MS).toBe(600_000)
   })
 })

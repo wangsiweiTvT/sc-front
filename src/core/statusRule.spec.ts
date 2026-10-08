@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { judgeDeviceStatus } from './statusRule'
+import { OFFLINE_AFTER_MS } from '@/config/params'
 import type { Reading, ThresholdRule } from '@/api/types'
 
 const T0 = 1_700_000_000_000
@@ -19,9 +20,9 @@ describe('judgeDeviceStatus', () => {
     expect(info.violations).toEqual([])
   })
 
-  it('恰好在 60s 边界仍在线,60s+1ms 判离线', () => {
-    expect(judgeDeviceStatus({ latestReading: reading({ Vf: 15 }), now: T0 + 60_000, rules: [] }).status).toBe('online')
-    expect(judgeDeviceStatus({ latestReading: reading({ Vf: 15 }), now: T0 + 60_001, rules: [] }).status).toBe('offline')
+  it('恰好在 13 分钟边界仍在线,超过 1ms 判离线', () => {
+    expect(judgeDeviceStatus({ latestReading: reading({ Vf: 15 }), now: T0 + OFFLINE_AFTER_MS, rules: [] }).status).toBe('online')
+    expect(judgeDeviceStatus({ latestReading: reading({ Vf: 15 }), now: T0 + OFFLINE_AFTER_MS + 1, rules: [] }).status).toBe('offline')
   })
 
   it('从无数据(初始)判离线', () => {

@@ -40,8 +40,8 @@ export const DEVICES: Device[] = [
 
 export const DEVICE_IDS: DeviceId[] = DEVICES.map((d) => d.id)
 
-/** 超过该时长无新数据即判离线 */
-export const OFFLINE_AFTER_MS = 60_000
+/** 超过该时长无新数据即判离线(设备 13 分钟定时上报) */
+export const OFFLINE_AFTER_MS = 13 * 60_000
 /** 同设备同参数同类型告警的短信冷却窗口 */
 export const ALARM_COOLDOWN_MS = 600_000
 /** 模拟数据刷新周期 */

@@ -52,7 +52,7 @@ function violationFor(key: ParamKey) {
 
     <div class="flex items-center justify-between text-xs">
       <span class="sc-dim">最近上报:{{ agoText }}</span>
-      <el-tooltip content="停止该设备模拟上报;离线判定为 60 秒无数据,约 1 分钟后状态切换" placement="top">
+      <el-tooltip content="停止该设备模拟上报;离线判定为 13 分钟无数据,到点后状态切换" placement="top">
         <el-button
           size="small"
           :type="forcedOffline ? 'success' : 'warning'"
