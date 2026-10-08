@@ -15,7 +15,7 @@ npm run build      # 类型检查 + 产物构建
 
 当前使用模拟数据(`VITE_USE_MOCK=true` 为默认)。真实报文形状:`{ deviceId, params: { Sf, Vf, Fc, pHf, Tf, Cf }, timestamp }`,与 Python 采集端经 MQTT(`Chen-Su-Yi/<client_id>`)上报的数据一致。
 
-后端 API 就绪后:设置 `VITE_USE_MOCK=false` 并在 `src/api/http.ts` 接入 `VITE_API_BASE` 与真实端点,页面与 store 零改动。约定端点见 `docs/superpowers/specs/2026-09-29-sensor-monitor-design.md` 第 11 节。
+后端 API 就绪后:设置 `VITE_USE_MOCK=false` 并在 `src/api/http.ts` 接入 `VITE_API_BASE` 与真实端点,页面与 store 零改动。接口需求清单与样例见 `docs/backend-api.md`(对接后端的交付文档);愿景级约定见 `docs/superpowers/specs/2026-09-29-sensor-monitor-design.md` 第 11 节。
 
 ## 演示要点
 
