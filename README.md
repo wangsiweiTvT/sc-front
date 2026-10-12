@@ -11,6 +11,8 @@ npm test           # vitest 单元测试
 npm run build      # 类型检查 + 产物构建
 ```
 
+部署与运维:Windows 全链路部署手册见 `docs/windows-deploy.md`,系统结构与数据流说明见 `docs/system-guide.md`。
+
 ## 数据源
 
 当前使用模拟数据(`VITE_USE_MOCK=true` 为默认)。真实报文形状:`{ deviceId, params: { Sf, Vf, Fc, pHf, Tf, Cf }, timestamp }`,与 Python 采集端经 MQTT(`Chen-Su-Yi/<client_id>`)上报的数据一致。
