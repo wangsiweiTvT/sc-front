@@ -11,7 +11,7 @@ npm test           # vitest 单元测试
 npm run build      # 类型检查 + 产物构建
 ```
 
-部署与运维:Windows 全链路部署手册见 `docs/windows-deploy.md`,系统结构与数据流说明见 `docs/system-guide.md`。
+部署与运维:Windows 全链路部署手册见 `docs/windows-deploy.md`,系统结构与数据流说明见 `docs/system-guide.md`,前端页面操作说明书见 `docs/frontend-manual.md`。
 
 ## 数据源
 
