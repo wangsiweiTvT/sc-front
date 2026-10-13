@@ -34,10 +34,15 @@ export function useSettingsStore() {
     await configApi.saveThresholds(plain)
   }
 
-  async function addReceiver(name: string, phone: string): Promise<Receiver> {
-    const r = await configApi.addReceiver({ name, phone })
+  async function addReceiver(name: string, phone: string, subscribedDevices: DeviceId[] = []): Promise<Receiver> {
+    const r = await configApi.addReceiver({ name, phone, subscribedDevices })
     state.receivers.push(r)
     return r
+  }
+
+  async function updateReceiver(receiver: Receiver): Promise<void> {
+    await configApi.updateReceiver(receiver)
+    state.receivers = state.receivers.map((r) => (r.id === receiver.id ? receiver : r))
   }
 
   async function removeReceiver(id: string): Promise<void> {
@@ -45,5 +50,5 @@ export function useSettingsStore() {
     state.receivers = state.receivers.filter((r) => r.id !== id)
   }
 
-  return { state, init, rulesFor, ruleFor, save, addReceiver, removeReceiver }
+  return { state, init, rulesFor, ruleFor, save, addReceiver, updateReceiver, removeReceiver }
 }

@@ -53,6 +53,8 @@ export interface Receiver {
   id: string
   name: string
   phone: string
+  /** 三期 §8:接收人只收所订阅设备的告警短信(显式订阅才收,不订阅 = 收不到) */
+  subscribedDevices: DeviceId[]
 }
 
 export interface SmsInfo {

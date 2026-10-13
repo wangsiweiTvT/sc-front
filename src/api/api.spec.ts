@@ -24,12 +24,27 @@ describe('configApi', () => {
     expect(localStorage.getItem(STORAGE_KEYS.thresholds)).toContain('"low":1')
   })
 
-  it('接收人增删', async () => {
+  it('接收人增删改:subscribedDevices 随建随改(三期 §8)', async () => {
     expect(await configApi.getReceivers()).toEqual([])
-    const r = await configApi.addReceiver({ name: '张三', phone: '13800000000' })
-    expect((await configApi.getReceivers())).toHaveLength(1)
+    const r = await configApi.addReceiver({
+      name: '张三', phone: '13800000000', subscribedDevices: ['Di-Jiu-Shui-Chang-1'],
+    })
+    await expect(configApi.getReceivers()).resolves.toEqual([
+      { id: r.id, name: '张三', phone: '13800000000', subscribedDevices: ['Di-Jiu-Shui-Chang-1'] },
+    ])
+    await configApi.updateReceiver({ ...r, subscribedDevices: ['Di-Jiu-Shui-Chang-2', 'Di-Jiu-Shui-Chang-3'] })
+    await expect(configApi.getReceivers()).resolves.toEqual([
+      { id: r.id, name: '张三', phone: '13800000000', subscribedDevices: ['Di-Jiu-Shui-Chang-2', 'Di-Jiu-Shui-Chang-3'] },
+    ])
     await configApi.removeReceiver(r.id)
-    expect(await configApi.getReceivers()).toEqual([])
+    await expect(configApi.getReceivers()).resolves.toEqual([])
+  })
+
+  it('getReceivers 兜底旧 localStorage 数据:无 subscribedDevices 字段 → []', async () => {
+    saveJSON(STORAGE_KEYS.receivers, [{ id: 'rcv-1', name: '老数据', phone: '13800000000' }])
+    await expect(configApi.getReceivers()).resolves.toEqual([
+      { id: 'rcv-1', name: '老数据', phone: '13800000000', subscribedDevices: [] },
+    ])
   })
 })
 

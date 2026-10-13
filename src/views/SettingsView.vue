@@ -1,11 +1,15 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import type { DeviceId, Receiver } from '@/api/types'
 import { useSettingsStore } from '@/stores/settings'
 import { validatePhone, validateThresholdRules } from '@/core/validation'
 import { DEVICES, PARAM_META_MAP } from '@/config/params'
 
 const settings = useSettingsStore()
+
+/** 勾选框短标签:九厂一期-1# → 1# */
+const deviceShort = computed(() => DEVICES.map((d) => ({ id: d.id, label: d.name.split('-')[1]! })))
 
 onMounted(() => {
   void settings.init()
@@ -22,7 +26,7 @@ async function saveAll(): Promise<void> {
 }
 
 const dialogVisible = ref(false)
-const form = ref({ name: '', phone: '' })
+const form = ref({ name: '', phone: '', subscribedDevices: [] as DeviceId[] })
 
 async function submitReceiver(): Promise<void> {
   const name = form.value.name.trim()
@@ -34,10 +38,24 @@ async function submitReceiver(): Promise<void> {
     ElMessage.error('手机号须为 1 开头的 11 位数字')
     return
   }
-  await settings.addReceiver(name, form.value.phone)
-  ElMessage.success('接收人已添加,新告警短信约 10 秒内按新名单发送')
+  await settings.addReceiver(name, form.value.phone, form.value.subscribedDevices)
+  ElMessage.success('接收人已添加,新告警短信约 10 秒内按订阅名单发送')
   dialogVisible.value = false
-  form.value = { name: '', phone: '' }
+  form.value = { name: '', phone: '', subscribedDevices: [] }
+}
+
+/** 勾选即保存:订阅/取消订阅立即 PUT,约 10 秒被检测器采纳(三期 §8) */
+async function toggleSubscribe(row: Receiver, id: DeviceId): Promise<void> {
+  const set = new Set(row.subscribedDevices)
+  if (set.has(id)) set.delete(id)
+  else set.add(id)
+  const subscribedDevices = [...set]
+  await settings.updateReceiver({ ...row, subscribedDevices })
+  ElMessage.success(
+    subscribedDevices.length === 0
+      ? '已更新:未订阅任何设备,该接收人将收不到短信'
+      : '订阅已更新,新告警短信约 10 秒内按新名单发送',
+  )
 }
 
 async function removeReceiver(id: string): Promise<void> {
@@ -96,6 +114,17 @@ async function removeReceiver(id: string): Promise<void> {
       <el-table :data="settings.state.receivers" border size="small" class="w-full" empty-text="暂无接收人,告警短信将标记为发送失败">
         <el-table-column prop="name" label="姓名" width="160" />
         <el-table-column prop="phone" label="手机号" width="200" />
+        <el-table-column label="订阅设备" min-width="280">
+          <template #default="{ row }">
+            <el-checkbox
+              v-for="d in deviceShort"
+              :key="d.id"
+              :model-value="row.subscribedDevices.includes(d.id)"
+              @change="toggleSubscribe(row, d.id)"
+            >{{ d.label }}</el-checkbox>
+            <div v-if="row.subscribedDevices.length === 0" class="sc-dim text-xs">未订阅任何设备,将不会收到短信</div>
+          </template>
+        </el-table-column>
         <el-table-column label="操作" width="100">
           <template #default="{ row }">
             <el-button size="small" type="danger" plain @click="removeReceiver(row.id)">删除</el-button>
@@ -111,6 +140,12 @@ async function removeReceiver(id: string): Promise<void> {
         </el-form-item>
         <el-form-item label="手机号">
           <el-input v-model="form.phone" placeholder="1 开头的 11 位数字" maxlength="11" />
+        </el-form-item>
+        <el-form-item label="订阅设备">
+          <el-checkbox-group v-model="form.subscribedDevices">
+            <el-checkbox v-for="d in deviceShort" :key="d.id" :value="d.id">{{ d.label }}</el-checkbox>
+          </el-checkbox-group>
+          <div v-if="form.subscribedDevices.length === 0" class="sc-dim w-full text-xs">不订阅任何设备,将不会收到短信</div>
         </el-form-item>
       </el-form>
       <template #footer>

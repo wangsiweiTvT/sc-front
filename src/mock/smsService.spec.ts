@@ -4,8 +4,8 @@ import type { AlarmRecord, Receiver } from '@/api/types'
 
 const T0 = 1_700_000_000_000
 const receivers: Receiver[] = [
-  { id: 'r1', name: '张三', phone: '13800000001' },
-  { id: 'r2', name: '李四', phone: '13800000002' },
+  { id: 'r1', name: '张三', phone: '13800000001', subscribedDevices: ['Di-Jiu-Shui-Chang-1'] },
+  { id: 'r2', name: '李四', phone: '13800000002', subscribedDevices: ['Di-Jiu-Shui-Chang-1'] },
 ]
 
 function highAlarm(): AlarmRecord {

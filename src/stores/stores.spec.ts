@@ -51,7 +51,7 @@ describe('monitor + alarms 集成(判定已移交后端,mock 模式由模拟检�
   it('告警轮询:模拟检测器产告警入库 → 轮询读到 → 短信落定后下次轮询可见', async () => {
     const { monitor, alarms, settings, simulator } = await freshStores()
     await monitor.init()
-    await settings.addReceiver('测试员', '13800000000')
+    await settings.addReceiver('测试员', '13800000000', ['Di-Jiu-Shui-Chang-1'])
     simulator.forceAbnormal('Di-Jiu-Shui-Chang-1', 'Vf', 10 * 60_000, 'high')
     await vi.advanceTimersByTimeAsync(ALARM_POLL_INTERVAL_MS)
     expect(alarms.state.records).toHaveLength(1)
@@ -67,7 +67,7 @@ describe('monitor + alarms 集成(判定已移交后端,mock 模式由模拟检�
   it('未读数 = 已读水位之后的新增条数;markAllRead 归零后新告警再 +1', async () => {
     const { monitor, alarms, settings, simulator } = await freshStores()
     await monitor.init()
-    await settings.addReceiver('测试员', '13800000000')
+    await settings.addReceiver('测试员', '13800000000', ['Di-Jiu-Shui-Chang-1'])
     simulator.forceAbnormal('Di-Jiu-Shui-Chang-1', 'Vf', 10 * 60_000, 'high')
     await vi.advanceTimersByTimeAsync(ALARM_POLL_INTERVAL_MS)
     expect(alarms.state.unread).toBe(1)
@@ -85,7 +85,7 @@ describe('monitor + alarms 集成(判定已移交后端,mock 模式由模拟检�
   it('上报停止 → 检测器产生一条 critical 离线告警;恢复上报不产生恢复告警', async () => {
     const { monitor, alarms, settings, simulator } = await freshStores()
     await monitor.init()
-    await settings.addReceiver('测试员', '13800000000')
+    await settings.addReceiver('测试员', '13800000000', ['Di-Jiu-Shui-Chang-2'])
     await vi.advanceTimersByTimeAsync(ALARM_POLL_INTERVAL_MS) // 首轮扫描:全部在线
     simulator.setManualOffline('Di-Jiu-Shui-Chang-2', true)
     await vi.advanceTimersByTimeAsync(OFFLINE_AFTER_MS + 2 * ALARM_POLL_INTERVAL_MS)
@@ -96,6 +96,27 @@ describe('monitor + alarms 集成(判定已移交后端,mock 模式由模拟检�
     simulator.setManualOffline('Di-Jiu-Shui-Chang-2', false)
     await vi.advanceTimersByTimeAsync(2 * ALARM_POLL_INTERVAL_MS)
     expect(alarms.state.records).toHaveLength(1) // 仅离线那一条,无恢复告警
+    monitor.stop()
+    alarms.stop()
+  })
+
+  it('订阅路由:短信只发订阅该设备的人;设备无人订阅 → failed 且 receivers 空(三期 §8)', async () => {
+    const { monitor, alarms, settings, simulator } = await freshStores()
+    await monitor.init()
+    await settings.addReceiver('甲', '13800000001', ['Di-Jiu-Shui-Chang-1'])
+    await settings.addReceiver('乙', '13800000002', ['Di-Jiu-Shui-Chang-2'])
+    simulator.forceAbnormal('Di-Jiu-Shui-Chang-1', 'Vf', 10 * 60_000, 'high')
+    simulator.forceAbnormal('Di-Jiu-Shui-Chang-3', 'Tf', 10 * 60_000, 'high') // 无人订阅
+    await vi.advanceTimersByTimeAsync(ALARM_POLL_INTERVAL_MS) // 产生 + 首轮读到(pending)
+    await vi.advanceTimersByTimeAsync(1_000) // 短信落定写回
+    await vi.advanceTimersByTimeAsync(ALARM_POLL_INTERVAL_MS) // 下一轮读到终态
+    const [a1, a3] = alarms.state.records
+    expect(a1!.deviceId).toBe('Di-Jiu-Shui-Chang-1')
+    expect(a1!.sms.receivers).toEqual(['13800000001'])
+    expect(a1!.sms.status).toBe('sent')
+    expect(a3!.deviceId).toBe('Di-Jiu-Shui-Chang-3')
+    expect(a3!.sms.status).toBe('failed')
+    expect(a3!.sms.receivers).toEqual([])
     monitor.stop()
     alarms.stop()
   })
@@ -110,5 +131,14 @@ describe('settings store', () => {
     expect(localStorage.getItem('sc-front:receivers')).toContain('王五')
     await settings.removeReceiver(settings.state.receivers[0]!.id)
     expect(settings.state.receivers).toHaveLength(0)
+  })
+
+  it('updateReceiver 同步内存与持久层(订阅编辑)', async () => {
+    const { settings } = await freshStores()
+    await settings.init()
+    const r = await settings.addReceiver('赵六', '13700000000', ['Di-Jiu-Shui-Chang-1'])
+    await settings.updateReceiver({ ...r, subscribedDevices: ['Di-Jiu-Shui-Chang-1', 'Di-Jiu-Shui-Chang-4'] })
+    expect(settings.state.receivers[0]!.subscribedDevices).toEqual(['Di-Jiu-Shui-Chang-1', 'Di-Jiu-Shui-Chang-4'])
+    expect(localStorage.getItem('sc-front:receivers')).toContain('Di-Jiu-Shui-Chang-4')
   })
 })

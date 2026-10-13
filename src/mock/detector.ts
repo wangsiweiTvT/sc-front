@@ -36,8 +36,9 @@ export const mockDetector = {
     }
     if (fresh.length === 0) return
     saveJSON(STORAGE_KEYS.alarms, [...existing, ...fresh].slice(-ALARM_MAX_COUNT))
-    const receivers = settings.state.receivers
     for (const record of fresh) {
+      // 三期 §8:短信按设备订阅路由,只发订阅了该设备的接收人;无人订阅 → failed(与后端一致)
+      const receivers = settings.state.receivers.filter((r) => r.subscribedDevices.includes(record.deviceId))
       sendSms(record, { receivers, onSettled: updateOne })
     }
   },
