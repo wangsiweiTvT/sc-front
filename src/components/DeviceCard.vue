@@ -31,8 +31,8 @@ function violationFor(key: ParamKey) {
   >
     <div class="flex items-center justify-between">
       <div>
-        <div class="text-lg font-semibold">{{ device.name }}</div>
-        <div class="sc-dim mt-0.5 text-xs">{{ device.clientId }}</div>
+        <div class="text-lg font-semibold">{{ device.clientId }}</div>
+        <div class="sc-dim mt-0.5 text-xs">{{ device.name }}</div>
       </div>
       <StatusBadge :status="statusInfo?.status ?? 'offline'" />
     </div>
