@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { onMounted, ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import type { DeviceId, Receiver } from '@/api/types'
 import { useSettingsStore } from '@/stores/settings'
@@ -7,9 +7,6 @@ import { validatePhone, validateThresholdRules } from '@/core/validation'
 import { DEVICES, PARAM_META_MAP } from '@/config/params'
 
 const settings = useSettingsStore()
-
-/** 勾选框短标签:九厂一期-1# → 1# */
-const deviceShort = computed(() => DEVICES.map((d) => ({ id: d.id, label: d.name.split('-')[1]! })))
 
 onMounted(() => {
   void settings.init()
@@ -114,14 +111,14 @@ async function removeReceiver(id: string): Promise<void> {
       <el-table :data="settings.state.receivers" border size="small" class="w-full" empty-text="暂无接收人,告警短信将标记为发送失败">
         <el-table-column prop="name" label="姓名" width="160" />
         <el-table-column prop="phone" label="手机号" width="200" />
-        <el-table-column label="订阅设备" min-width="280">
+        <el-table-column label="订阅设备" min-width="380">
           <template #default="{ row }">
             <el-checkbox
-              v-for="d in deviceShort"
+              v-for="d in DEVICES"
               :key="d.id"
               :model-value="row.subscribedDevices.includes(d.id)"
               @change="toggleSubscribe(row, d.id)"
-            >{{ d.label }}</el-checkbox>
+            >{{ d.clientId }}</el-checkbox>
             <div v-if="row.subscribedDevices.length === 0" class="sc-dim text-xs">未订阅任何设备,将不会收到短信</div>
           </template>
         </el-table-column>
@@ -133,7 +130,7 @@ async function removeReceiver(id: string): Promise<void> {
       </el-table>
     </div>
 
-    <el-dialog v-model="dialogVisible" title="添加接收人" width="400px">
+    <el-dialog v-model="dialogVisible" title="添加接收人" width="480px">
       <el-form label-width="70px">
         <el-form-item label="姓名">
           <el-input v-model="form.name" placeholder="如:张工" />
@@ -143,7 +140,7 @@ async function removeReceiver(id: string): Promise<void> {
         </el-form-item>
         <el-form-item label="订阅设备">
           <el-checkbox-group v-model="form.subscribedDevices">
-            <el-checkbox v-for="d in deviceShort" :key="d.id" :value="d.id">{{ d.label }}</el-checkbox>
+            <el-checkbox v-for="d in DEVICES" :key="d.id" :value="d.id">{{ d.clientId }}</el-checkbox>
           </el-checkbox-group>
           <div v-if="form.subscribedDevices.length === 0" class="sc-dim w-full text-xs">不订阅任何设备,将不会收到短信</div>
         </el-form-item>
