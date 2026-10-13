@@ -5,7 +5,7 @@ import { alarmApi } from '@/api/alarmApi'
 import { buildSmsText } from '@/utils/alarmText'
 import { mockDetector } from '@/mock/detector'
 import { loadJSON, saveJSON, STORAGE_KEYS } from '@/mock/memory'
-import { ALARM_POLL_INTERVAL_MS, DEVICES } from '@/config/params'
+import { ALARM_POLL_INTERVAL_MS } from '@/config/params'
 
 const useMock = (import.meta.env.VITE_USE_MOCK ?? 'true') !== 'false'
 
@@ -21,17 +21,13 @@ let seenIds = new Set<string>()
 /** 已读水位:只统计该时间之后产生的告警(判定移交后端后,前端以拉取为准) */
 let lastReadAt = 0
 
-function deviceName(id: string): string {
-  return DEVICES.find((d) => d.id === id)?.name ?? id
-}
-
 function notifyNew(records: AlarmRecord[]): void {
   for (const r of records) {
     if (seenIds.has(r.id)) continue
     seenIds.add(r.id)
     ElNotification({
       title: r.level === 'critical' ? '严重告警' : '告警提醒',
-      message: buildSmsText(r, deviceName(r.deviceId)),
+      message: buildSmsText(r, r.deviceId),
       type: r.level === 'critical' ? 'error' : 'warning',
       duration: 4000,
     })

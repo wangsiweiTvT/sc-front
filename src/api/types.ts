@@ -14,7 +14,6 @@ export type SmsStatus = 'pending' | 'sent' | 'failed'
 export interface Device {
   id: DeviceId
   clientId: string
-  name: string
   model: string
   location: string
   commissionDate: string

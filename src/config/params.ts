@@ -17,22 +17,22 @@ export const PARAM_META_MAP = Object.fromEntries(
 
 export const DEVICES: Device[] = [
   {
-    id: 'Di-Jiu-Shui-Chang-1', clientId: 'Di-Jiu-Shui-Chang-1', name: '九厂一期-1#',
+    id: 'Di-Jiu-Shui-Chang-1', clientId: 'Di-Jiu-Shui-Chang-1',
     model: 'SP-300 多参数水质监测仪', location: '1# 沉淀池', commissionDate: '2025-03-18',
     comm: 'MQTT · 100.85.44.98:1883', manager: '张工', image: sensorImg,
   },
   {
-    id: 'Di-Jiu-Shui-Chang-2', clientId: 'Di-Jiu-Shui-Chang-2', name: '九厂一期-2#',
+    id: 'Di-Jiu-Shui-Chang-2', clientId: 'Di-Jiu-Shui-Chang-2',
     model: 'SP-300 多参数水质监测仪', location: '2# 沉淀池', commissionDate: '2025-03-18',
     comm: 'MQTT · 100.85.44.98:1883', manager: '李工', image: sensorImg,
   },
   {
-    id: 'Di-Jiu-Shui-Chang-3', clientId: 'Di-Jiu-Shui-Chang-3', name: '九厂一期-3#',
+    id: 'Di-Jiu-Shui-Chang-3', clientId: 'Di-Jiu-Shui-Chang-3',
     model: 'SP-300 多参数水质监测仪', location: '3# 沉淀池', commissionDate: '2025-04-02',
     comm: 'MQTT · 100.85.44.98:1883', manager: '王工', image: sensorImg,
   },
   {
-    id: 'Di-Jiu-Shui-Chang-4', clientId: 'Di-Jiu-Shui-Chang-4', name: '九厂一期-4#',
+    id: 'Di-Jiu-Shui-Chang-4', clientId: 'Di-Jiu-Shui-Chang-4',
     model: 'SP-300 多参数水质监测仪', location: '加药间', commissionDate: '2025-04-02',
     comm: 'MQTT · 100.85.44.98:1883', manager: '赵工', image: sensorImg,
   },

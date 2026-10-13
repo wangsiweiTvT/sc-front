@@ -30,10 +30,7 @@ function violationFor(key: ParamKey) {
     @click="$emit('open')"
   >
     <div class="flex items-center justify-between">
-      <div>
-        <div class="text-lg font-semibold">{{ device.clientId }}</div>
-        <div class="sc-dim mt-0.5 text-xs">{{ device.name }}</div>
-      </div>
+      <div class="text-lg font-semibold">{{ device.clientId }}</div>
       <StatusBadge :status="statusInfo?.status ?? 'offline'" />
     </div>
 

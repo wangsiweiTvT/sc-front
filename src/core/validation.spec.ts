@@ -7,11 +7,11 @@ describe('validateThresholdRules', () => {
     expect(validateThresholdRules(defaultThresholds())).toBeNull()
   })
 
-  it('low >= high 返回中文错误并点名设备与参数', () => {
+  it('low >= high 返回中文错误并点名设备(编号)与参数', () => {
     const rules = defaultThresholds()
     rules[0]!.high = rules[0]!.low
     const msg = validateThresholdRules(rules)!
-    expect(msg).toContain('九厂一期-1#')
+    expect(msg).toContain('Di-Jiu-Shui-Chang-1')
     expect(msg).toContain('沉降比')
     expect(msg).toContain('小于')
   })

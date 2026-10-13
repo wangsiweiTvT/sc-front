@@ -24,7 +24,7 @@ const statusInfo = computed(() => (props.device ? monitor.state.statuses[props.d
 <template>
   <el-drawer v-model="visible" :title="device?.clientId" size="560px">
     <template v-if="device">
-      <img :src="device.image" :alt="device.name" class="w-full rounded-lg border border-[var(--sc-border)]" />
+      <img :src="device.image" :alt="device.clientId" class="w-full rounded-lg border border-[var(--sc-border)]" />
 
       <el-descriptions :column="2" border size="small" class="mt-4">
         <el-descriptions-item label="设备编号">{{ device.clientId }}</el-descriptions-item>

@@ -20,8 +20,8 @@ function offlineAlarm(): AlarmRecord {
 
 describe('buildSmsText', () => {
   it('超上限文案含设备名、参数、值、方向与阈值', () => {
-    const text = buildSmsText(highAlarm(), '九厂一期-1#')
-    expect(text).toContain('九厂一期-1#')
+    const text = buildSmsText(highAlarm(), 'Di-Jiu-Shui-Chang-1')
+    expect(text).toContain('Di-Jiu-Shui-Chang-1')
     expect(text).toContain('沉降比')
     expect(text).toContain('38.3')
     expect(text).toContain('超上限')
@@ -29,6 +29,6 @@ describe('buildSmsText', () => {
   })
 
   it('离线文案', () => {
-    expect(buildSmsText(offlineAlarm(), '九厂一期-1#')).toContain('设备离线')
+    expect(buildSmsText(offlineAlarm(), 'Di-Jiu-Shui-Chang-1')).toContain('设备离线')
   })
 })
