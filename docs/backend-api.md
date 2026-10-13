@@ -26,7 +26,7 @@
       allow_methods=["*"], allow_headers=["*"],
   )
   ```
-- 字段风格:只读的 sensor 接口维持现状(snake_case + ISO 时间);**新增的存储型接口(告警/阈值/接收人)即前端 JSON 原样存取**,字段名与时间格式按 §4 样例,后端无需理解字段含义。
+- 字段风格:只读的 sensor 接口维持现状(snake_case + ISO 时间);**新增的存储型接口(告警/阈值/接收人)即前端 JSON 原样存取**,字段名与时间格式按 §4 样例,后端无需理解字段含义。(三期起接收人新增后端消费的 `subscribedDevices` 用于短信路由,不再是纯透传,见 §8;告警/阈值仍原样存取。)
 - 错误响应:沿用 FastAPI 默认 `{"detail": "..."}`;前端只做失败提示,不解析错误内容。
 - 鉴权:v1 无(内网使用)。
 - 调用频率:`latest` 类接口前端每 2 秒轮询一次,其余为低频操作;现有数据量级下无压力。
@@ -56,7 +56,7 @@
 
 - 需要什么:
   - 阈值规则:4 设备 × 6 参数 = **24 条**,整体读取 / 整体保存(前端已做校验:low < high)。
-  - 接收人:列表 / 添加(服务端生成 id)/ 删除;手机号规则 `^1\d{10}$`(前端已校验,后端兜底可选)。
+  - 接收人:列表 / 添加(服务端生成 id)/ 删除(三期新增设备订阅与编辑,见 §8);手机号规则 `^1\d{10}$`(前端已校验,后端兜底可选)。
 - 现有接口判定:✗ 无,需新增,见 §4.3、§4.5。
 
 ### 2.5 短信通知(边界说明)
@@ -87,7 +87,7 @@
 | **必做** | 开 CORS | (api.py 加中间件) | 改现有 |
 | **必做** | 告警存储 | `GET/POST/PUT/DELETE /api/alarms` | 新增 |
 | **必做** | 阈值规则 | `GET/PUT /api/thresholds` | 新增 |
-| **必做** | 短信接收人 | `GET/POST/DELETE /api/receivers` | 新增 |
+| **必做** | 短信接收人 | `GET/POST/PUT/DELETE /api/receivers` | 新增(三期加 PUT 与订阅字段,见 §8) |
 | 可选 | 4 台最新聚合 | `GET /api/readings/latest` | 新增(不加则前端用 4×`/latest`) |
 | 可选 | 设备静态档案 | 扩展 `GET /api/devices` | 新增(v1 前端本地档案,不需要) |
 | ~~可选~~ | ~~演示用离线开关~~ | ~~`POST /api/devices/{id}/simulate-offline`~~ | 前端"模拟离线"按钮已于 2026-10-08 移除,该接口不再有消费者(后端可留可删) |
@@ -190,19 +190,21 @@ curl -s -X PUT http://127.0.0.1:8000/api/thresholds -H 'Content-Type: applicatio
 
 实现自选(逐台取最新 / 窗口函数均可);`server_time` 供前端做离线判定基准。**若不加此接口,前端将并发调用现有 `GET /api/devices/{id}/latest` ×4 并把 404 视为 `null`,功能不受影响。**
 
-### 4.5 短信接收人(必做)
+### 4.5 短信接收人(必做;三期起含设备订阅,见 §8)
 
 | 操作 | 约定 |
 |---|---|
-| `GET /api/receivers` | 返回数组 `[{ "id": "rcv-1", "name": "张工", "phone": "13800000000" }]`,可为空 |
-| `POST /api/receivers` | 请求体 `{ "name": "张工", "phone": "13800000000" }`;**id 由服务端生成**;返回创建后的完整对象(200/201 均可) |
+| `GET /api/receivers` | 返回数组 `[{ "id": "rcv-1", "name": "张工", "phone": "13800000000", "subscribedDevices": ["Di-Jiu-Shui-Chang-1"] }]`,可为空;未配置订阅的 `subscribedDevices` 为 `[]` |
+| `POST /api/receivers` | 请求体 `{ "name": "张工", "phone": "13800000000", "subscribedDevices": [...] }`,`subscribedDevices` 可选默认 `[]`;**id 由服务端生成**;返回创建后的完整对象(200/201 均可) |
+| `PUT /api/receivers/{id}` | 三期新增;全量更新 `name` / `phone` / `subscribedDevices`(三字段必传,缺了 422);id 不存在返回 404 |
 | `DELETE /api/receivers/{id}` | 删除;响应 `200 {}`;id 不存在也返回 200(幂等) |
 
-手机号校验 `^1\d{10}$`(前端已校验,后端兜底可选)。样例:
+手机号校验 `^1\d{10}$`(前端已校验,后端兜底可选);`subscribedDevices` 内设备 id 必须 ∈ `Di-Jiu-Shui-Chang-1..4`,否则 400。样例:
 
 ```bash
-curl -s -X POST http://127.0.0.1:8000/api/receivers -H 'Content-Type: application/json' -d '{"name":"张工","phone":"13800000000"}'
+curl -s -X POST http://127.0.0.1:8000/api/receivers -H 'Content-Type: application/json' -d '{"name":"张工","phone":"13800000000","subscribedDevices":["Di-Jiu-Shui-Chang-1","Di-Jiu-Shui-Chang-2"]}'
 curl -s http://127.0.0.1:8000/api/receivers
+curl -s -X PUT http://127.0.0.1:8000/api/receivers/rcv-1 -H 'Content-Type: application/json' -d '{"name":"张工","phone":"13800000000","subscribedDevices":["Di-Jiu-Shui-Chang-1"]}'
 curl -s -X DELETE http://127.0.0.1:8000/api/receivers/rcv-1
 ```
 
@@ -223,7 +225,7 @@ curl -s http://127.0.0.1:8000/api/readings/latest
 # 4) 阈值:首访返回 24 条默认值;PUT 后 GET 能取回
 curl -s http://127.0.0.1:8000/api/thresholds
 # 5) 告警:POST 一条 → GET 可见 → PUT 改 sms.status → DELETE 后为空
-# 6) 接收人:POST 返回带 id 的对象 → GET 可见 → DELETE 后不可见
+# 6) 接收人:POST 返回带 id 的对象 → PUT 改订阅后 GET 能取回 → DELETE 后不可见
 # 7) 告警超过 500 条时,GET 只返回最新 500 条
 ```
 
@@ -264,3 +266,25 @@ curl -s http://127.0.0.1:8000/api/thresholds
 联调验收建议:调低某参数上限 → 10 秒内 GET /api/alarms 出现 warning(无需打开浏览器页面);停 sender 约 13 分钟 → critical 离线告警。
 
 - **前端二期接入确认(2026-10-08)**:本地判定与短信模拟已从前端调用链移除——监控刷新只算状态角标(展示),`alarmEngine`/`smsService` 挪入 `src/mock/` 由模拟检测器复刻后端语义(仅 `VITE_USE_MOCK=true` 演示模式使用);`alarmEngine.spec` 语义用例保留在 mock 层,与后端 `tests/test_detector.py` 同源。告警页/铃铛改为 **30 秒轮询 `GET /api/alarms`**,未读数 = 已读水位(localStorage 持久化)之后新增条数,新告警弹通知;`POST/PUT /api/alarms` 已从前端客户端删除,DELETE 清空保留。已接 `GET /api/detector/status`,顶栏展示"检测器运行中/已停止"(60 秒轮询,接口异常显示为未知而非误报已停止)。阈值/接收人页接口不变,保存成功文案已注明"约 10 秒内生效"。
+
+## 8. 三期交接:短信按设备订阅(2026-10-13)
+
+告警短信从"receivers 全员广播"改为**按设备订阅**:接收人只收自己订阅设备的告警(越限与离线都按告警的 `device_id` 路由)。判定规则、冷却、文案、alarms 契约不变。后端设计文档:后端仓库 `docs/superpowers/specs/2026-10-13-receiver-subscription-design.md`。
+
+**契约变更(§4.5 已同步更新):**
+
+1. `GET /api/receivers` 每项新增 `subscribedDevices: string[]`(未配置返回 `[]`)。
+2. `POST /api/receivers` 入参可选 `subscribedDevices`,默认 `[]`。
+3. 新增 `PUT /api/receivers/{id}`,全量更新 `name` / `phone` / `subscribedDevices`(三字段必传,缺了 422;id 不存在 404)。
+
+**语义要点:**
+
+- **不订阅任何设备 = 收不到任何短信**(显式订阅才收,不是全员兜底)。后端升级后存量接收人订阅为空,需要逐个配置或由后端预填全部设备。
+- 告警记录 `sms.receivers` = 实际收件人(订阅了该设备的手机号),结构不变;某设备无人订阅时,该设备的告警 `sms.status` 沿用 `failed`(无接收人语义),展示无需特殊处理。
+
+**前端需要调整的:**
+
+1. 接收人管理页每人加 4 个设备勾选框(九厂一期-1#~4#):新建走 POST 带 `subscribedDevices`,编辑订阅走新 PUT;全不勾时建议明示"未订阅任何设备,将不会收到短信"。
+2. 告警页 / 铃铛 / 阈值页不动。
+
+联调验收建议:两人订阅不同设备 → 调低其中一台某参数上限 → 10 秒内出现 warning,其 `sms.receivers` 只含订阅者;未订阅设备的告警 `sms.status=failed` 且 `sms.receivers` 为空(dryrun 下后端 `logs/detector.log` 可见 `[SMS-dryrun] → 手机号`)。
