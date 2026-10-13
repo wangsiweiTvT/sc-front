@@ -22,5 +22,7 @@ export default defineConfig({
     include: ['src/**/*.spec.ts'],
     // .env.local(含 VITE_USE_MOCK=false)对测试模式同样生效,这里钉回 mock:套件不依赖本机 env
     env: { VITE_USE_MOCK: 'true' },
+    // 集成用例每条都 resetModules + 动态重导 store 模块,13 个文件并行时冷加载可超默认 5s
+    testTimeout: 15_000,
   },
 })
