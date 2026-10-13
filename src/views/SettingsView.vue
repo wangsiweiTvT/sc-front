@@ -72,7 +72,7 @@ async function removeReceiver(id: string): Promise<void> {
     </div>
 
     <el-tabs type="border-card">
-      <el-tab-pane v-for="device in DEVICES" :key="device.id" :label="device.name">
+      <el-tab-pane v-for="device in DEVICES" :key="device.id" :label="device.clientId">
         <el-table :data="settings.rulesFor(device.id)" border size="small">
           <el-table-column label="参数" width="140">
             <template #default="{ row }">{{ PARAM_META_MAP[row.paramKey as keyof typeof PARAM_META_MAP].label }}</template>

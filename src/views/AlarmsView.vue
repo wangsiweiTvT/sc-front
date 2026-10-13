@@ -29,10 +29,6 @@ function paramLabel(key: AlarmRecord['paramKey']): string {
   return key ? PARAM_META_MAP[key].label : '整机'
 }
 
-function deviceName(id: DeviceId): string {
-  return DEVICES.find((d) => d.id === id)?.name ?? id
-}
-
 async function clearAll(): Promise<void> {
   await ElMessageBox.confirm('确定清空全部告警记录?', '提示', { type: 'warning' })
   await alarms.clearAll()
@@ -44,8 +40,8 @@ async function clearAll(): Promise<void> {
   <div>
     <div class="mb-4 flex items-center justify-between">
       <div class="flex items-center gap-3">
-        <el-select v-model="filterDevice" placeholder="全部设备" clearable class="w-44">
-          <el-option v-for="d in DEVICES" :key="d.id" :label="d.name" :value="d.id" />
+        <el-select v-model="filterDevice" placeholder="全部设备" clearable class="w-52">
+          <el-option v-for="d in DEVICES" :key="d.id" :label="d.clientId" :value="d.id" />
         </el-select>
         <el-select v-model="filterType" placeholder="全部类型" clearable class="w-36">
           <el-option label="超上限" value="high" />
@@ -60,8 +56,8 @@ async function clearAll(): Promise<void> {
       <el-table-column label="时间" width="170">
         <template #default="{ row }">{{ formatDateTime(row.time) }}</template>
       </el-table-column>
-      <el-table-column label="设备" width="130">
-        <template #default="{ row }">{{ deviceName(row.deviceId) }}</template>
+      <el-table-column label="设备" width="185">
+        <template #default="{ row }">{{ row.deviceId }}</template>
       </el-table-column>
       <el-table-column label="参数" width="100">
         <template #default="{ row }">{{ paramLabel(row.paramKey) }}</template>

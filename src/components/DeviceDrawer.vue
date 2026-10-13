@@ -22,7 +22,7 @@ const statusInfo = computed(() => (props.device ? monitor.state.statuses[props.d
 </script>
 
 <template>
-  <el-drawer v-model="visible" :title="device?.name" size="560px">
+  <el-drawer v-model="visible" :title="device?.clientId" size="560px">
     <template v-if="device">
       <img :src="device.image" :alt="device.name" class="w-full rounded-lg border border-[var(--sc-border)]" />
 
