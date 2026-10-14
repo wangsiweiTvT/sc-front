@@ -183,7 +183,7 @@ async function removeReceiver(id: string): Promise<void> {
           <div class="sc-dim w-full text-xs">扫测试号二维码关注后,由管理员在测试号用户列表复制 openid 填入;清空即取消该渠道</div>
           <div class="mt-3 flex w-full items-center gap-3">
             <img
-              src="https://mp.weixin.qq.com/cgi-bin/showqrcode?ticket=gQEC8TwAAAAAAAAAAAAAS5odHRwOi8vd2VpeGluLnFxLmNvbS9xLzAyWmVncFpnb1plSHIxMDAwME0wN0kAAgTD-85qAwQAAAAA"
+              src="https://mp.weixin.qq.com/cgi-bin/showqrcode?ticket=gQEC8TwAAAAAAAAAAS5odHRwOi8vd2VpeGluLnFxLmNvbS9xLzAyWmVncFpnb1plSHIxMDAwME0wN0kAAgTD-85qAwQAAAAA"
               alt="微信测试号二维码"
               class="h-36 w-36 rounded-lg border border-[var(--sc-border)] bg-white"
             />
