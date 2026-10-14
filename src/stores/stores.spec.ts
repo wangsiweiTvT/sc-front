@@ -133,12 +133,16 @@ describe('settings store', () => {
     expect(settings.state.receivers).toHaveLength(0)
   })
 
-  it('updateReceiver 同步内存与持久层(订阅编辑)', async () => {
+  it('updateReceiver 同步内存与持久层(订阅编辑;wechatOpenid 编辑/清空 四期 §9)', async () => {
     const { settings } = await freshStores()
     await settings.init()
-    const r = await settings.addReceiver('赵六', '13700000000', ['Di-Jiu-Shui-Chang-1'])
+    const r = await settings.addReceiver('赵六', '13700000000', ['Di-Jiu-Shui-Chang-1'], 'oSTORE1')
     await settings.updateReceiver({ ...r, subscribedDevices: ['Di-Jiu-Shui-Chang-1', 'Di-Jiu-Shui-Chang-4'] })
     expect(settings.state.receivers[0]!.subscribedDevices).toEqual(['Di-Jiu-Shui-Chang-1', 'Di-Jiu-Shui-Chang-4'])
+    expect(settings.state.receivers[0]!.wechatOpenid).toBe('oSTORE1')
     expect(localStorage.getItem('sc-front:receivers')).toContain('Di-Jiu-Shui-Chang-4')
+    await settings.updateReceiver({ ...r, subscribedDevices: ['Di-Jiu-Shui-Chang-1', 'Di-Jiu-Shui-Chang-4'], wechatOpenid: null })
+    expect(settings.state.receivers[0]!.wechatOpenid).toBeNull()
+    expect(localStorage.getItem('sc-front:receivers')).toContain('"wechatOpenid":null')
   })
 })

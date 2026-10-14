@@ -65,7 +65,7 @@ sc-front 浏览器大屏（Vue3）
 | `DB_PASSWORD` | （必填） | MySQL 密码，缺失时服务拒绝启动 |
 | `DB_HOST` / `DB_PORT` | `127.0.0.1` / `3306` | 数据库地址 |
 | `DB_USER` / `DB_NAME` | `root` / `mqtt_data` | 账号 / 库名 |
-| `SMS_PROVIDER` | `dryrun` | `dryrun` 只记日志不发；`aliyun` 真发（另需 `SMS_ALIYUN_*` 四项） |
+| `SMS_PROVIDER` | `dryrun` | `dryrun` 只记日志不发；`aliyun` 真发（另需 `SMS_ALIYUN_*` 四项）；`wechat_sandbox` 发微信测试号模板消息（另需 `WECHAT_APP_ID` / `WECHAT_APP_SECRET` / `WECHAT_TEMPLATE_ID`，接收人须在前端填了 openid） |
 | `DETECTOR_POLL_SECONDS` | `10` | 检测器扫描周期 |
 | `DETECTOR_OFFLINE_SECONDS` | `780` | 离线判定窗口（= 13 分钟，与上报周期一致） |
 
@@ -86,7 +86,7 @@ sc-front 浏览器大屏（Vue3）
 2. 判定：启用参数越限 → `warning` 级告警；超 780 秒无上报 → `critical` 级离线告警（设备恢复不产生「恢复告警」）；
 3. 同（设备,参数,类型）10 分钟内只报一次（冷却防刷屏）；
 4. 告警写入 `alarms`（上限 500 条，前端可整表清空）；
-5. 短信只发给**订阅了该设备**的接收人（每人在前端勾选订阅设备，三期语义：不订阅 = 收不到），状态（`sent` / `failed`）随告警记录可查；该设备无人订阅时记 `failed`；
+5. 短信只发给**订阅了该设备**的接收人（每人在前端勾选订阅设备，三期语义：不订阅 = 收不到），状态（`sent` / `failed`）随告警记录可查；该设备无人订阅时记 `failed`；送达渠道（`dryrun` / `aliyun` 短信或 `wechat_sandbox` 微信测试号）由后端 `.env` 决定，微信渠道要求接收人已配 openid；
 6. 前端每 30 秒拉一次告警列表：新记录弹桌面通知、计入未读（已读水位之后的新增数）；
 7. 阈值 / 接收人改动约 10 秒后生效（检测器下个扫描周期重读配置）。
 

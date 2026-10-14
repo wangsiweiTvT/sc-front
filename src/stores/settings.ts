@@ -34,8 +34,13 @@ export function useSettingsStore() {
     await configApi.saveThresholds(plain)
   }
 
-  async function addReceiver(name: string, phone: string, subscribedDevices: DeviceId[] = []): Promise<Receiver> {
-    const r = await configApi.addReceiver({ name, phone, subscribedDevices })
+  async function addReceiver(
+    name: string,
+    phone: string,
+    subscribedDevices: DeviceId[] = [],
+    wechatOpenid: string | null = null,
+  ): Promise<Receiver> {
+    const r = await configApi.addReceiver({ name, phone, subscribedDevices, wechatOpenid })
     state.receivers.push(r)
     return r
   }

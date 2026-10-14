@@ -23,7 +23,27 @@ async function saveAll(): Promise<void> {
 }
 
 const dialogVisible = ref(false)
-const form = ref({ name: '', phone: '', subscribedDevices: [] as DeviceId[] })
+/** 正在编辑的接收人 id;null = 添加模式 */
+const editingId = ref<string | null>(null)
+const form = ref({ name: '', phone: '', subscribedDevices: [] as DeviceId[], wechatOpenid: '' })
+
+function openAdd(): void {
+  editingId.value = null
+  form.value = { name: '', phone: '', subscribedDevices: [], wechatOpenid: '' }
+  dialogVisible.value = true
+}
+
+/** 编辑时回填全部字段;openid 清空即提交 null(四期 §9) */
+function openEdit(row: Receiver): void {
+  editingId.value = row.id
+  form.value = {
+    name: row.name,
+    phone: row.phone,
+    subscribedDevices: [...row.subscribedDevices],
+    wechatOpenid: row.wechatOpenid ?? '',
+  }
+  dialogVisible.value = true
+}
 
 async function submitReceiver(): Promise<void> {
   const name = form.value.name.trim()
@@ -35,10 +55,17 @@ async function submitReceiver(): Promise<void> {
     ElMessage.error('手机号须为 1 开头的 11 位数字')
     return
   }
-  await settings.addReceiver(name, form.value.phone, form.value.subscribedDevices)
-  ElMessage.success('接收人已添加,新告警短信约 10 秒内按订阅名单发送')
+  const wechatOpenid = form.value.wechatOpenid.trim() || null
+  if (editingId.value) {
+    await settings.updateReceiver({
+      id: editingId.value, name, phone: form.value.phone, subscribedDevices: form.value.subscribedDevices, wechatOpenid,
+    })
+    ElMessage.success('接收人已更新,新告警约 10 秒内按新名单与新渠道发送')
+  } else {
+    await settings.addReceiver(name, form.value.phone, form.value.subscribedDevices, wechatOpenid)
+    ElMessage.success('接收人已添加,新告警短信约 10 秒内按订阅名单发送')
+  }
   dialogVisible.value = false
-  form.value = { name: '', phone: '', subscribedDevices: [] }
 }
 
 /** 勾选即保存:订阅/取消订阅立即 PUT,约 10 秒被检测器采纳(三期 §8) */
@@ -106,7 +133,7 @@ async function removeReceiver(id: string): Promise<void> {
     <div class="sc-panel mt-6 p-5">
       <div class="mb-3 flex items-center justify-between">
         <span class="font-semibold">短信接收人</span>
-        <el-button size="small" type="primary" plain @click="dialogVisible = true">添加接收人</el-button>
+        <el-button size="small" type="primary" plain @click="openAdd">添加接收人</el-button>
       </div>
       <el-table :data="settings.state.receivers" border size="small" class="w-full" empty-text="暂无接收人,告警短信将标记为发送失败">
         <el-table-column prop="name" label="姓名" width="160" />
@@ -122,16 +149,17 @@ async function removeReceiver(id: string): Promise<void> {
             <div v-if="row.subscribedDevices.length === 0" class="sc-dim text-xs">未订阅任何设备,将不会收到短信</div>
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="100">
+        <el-table-column label="操作" width="140">
           <template #default="{ row }">
+            <el-button size="small" @click="openEdit(row)">编辑</el-button>
             <el-button size="small" type="danger" plain @click="removeReceiver(row.id)">删除</el-button>
           </template>
         </el-table-column>
       </el-table>
     </div>
 
-    <el-dialog v-model="dialogVisible" title="添加接收人" width="480px">
-      <el-form label-width="70px">
+    <el-dialog v-model="dialogVisible" :title="editingId ? '编辑接收人' : '添加接收人'" width="480px">
+      <el-form label-width="90px">
         <el-form-item label="姓名">
           <el-input v-model="form.name" placeholder="如:张工" />
         </el-form-item>
@@ -143,6 +171,10 @@ async function removeReceiver(id: string): Promise<void> {
             <el-checkbox v-for="d in DEVICES" :key="d.id" :value="d.id">{{ d.clientId }}</el-checkbox>
           </el-checkbox-group>
           <div v-if="form.subscribedDevices.length === 0" class="sc-dim w-full text-xs">不订阅任何设备,将不会收到短信</div>
+        </el-form-item>
+        <el-form-item label="微信 openid">
+          <el-input v-model="form.wechatOpenid" placeholder="可选;不填则微信渠道无法送达" maxlength="64" />
+          <div class="sc-dim w-full text-xs">扫测试号二维码关注后,由管理员在测试号用户列表复制 openid 填入;清空即取消该渠道</div>
         </el-form-item>
       </el-form>
       <template #footer>

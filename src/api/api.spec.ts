@@ -24,26 +24,30 @@ describe('configApi', () => {
     expect(localStorage.getItem(STORAGE_KEYS.thresholds)).toContain('"low":1')
   })
 
-  it('接收人增删改:subscribedDevices 随建随改(三期 §8)', async () => {
+  it('接收人增删改:subscribedDevices 随建随改(三期 §8);wechatOpenid 可建可清空(四期 §9)', async () => {
     expect(await configApi.getReceivers()).toEqual([])
     const r = await configApi.addReceiver({
-      name: '张三', phone: '13800000000', subscribedDevices: ['Di-Jiu-Shui-Chang-1'],
+      name: '张三', phone: '13800000000', subscribedDevices: ['Di-Jiu-Shui-Chang-1'], wechatOpenid: 'oABC123',
     })
     await expect(configApi.getReceivers()).resolves.toEqual([
-      { id: r.id, name: '张三', phone: '13800000000', subscribedDevices: ['Di-Jiu-Shui-Chang-1'] },
+      { id: r.id, name: '张三', phone: '13800000000', subscribedDevices: ['Di-Jiu-Shui-Chang-1'], wechatOpenid: 'oABC123' },
     ])
     await configApi.updateReceiver({ ...r, subscribedDevices: ['Di-Jiu-Shui-Chang-2', 'Di-Jiu-Shui-Chang-3'] })
     await expect(configApi.getReceivers()).resolves.toEqual([
-      { id: r.id, name: '张三', phone: '13800000000', subscribedDevices: ['Di-Jiu-Shui-Chang-2', 'Di-Jiu-Shui-Chang-3'] },
+      { id: r.id, name: '张三', phone: '13800000000', subscribedDevices: ['Di-Jiu-Shui-Chang-2', 'Di-Jiu-Shui-Chang-3'], wechatOpenid: 'oABC123' },
+    ])
+    await configApi.updateReceiver({ ...r, subscribedDevices: ['Di-Jiu-Shui-Chang-2', 'Di-Jiu-Shui-Chang-3'], wechatOpenid: null })
+    await expect(configApi.getReceivers()).resolves.toEqual([
+      { id: r.id, name: '张三', phone: '13800000000', subscribedDevices: ['Di-Jiu-Shui-Chang-2', 'Di-Jiu-Shui-Chang-3'], wechatOpenid: null },
     ])
     await configApi.removeReceiver(r.id)
     await expect(configApi.getReceivers()).resolves.toEqual([])
   })
 
-  it('getReceivers 兜底旧 localStorage 数据:无 subscribedDevices 字段 → []', async () => {
+  it('getReceivers 兜底旧 localStorage 数据:无 subscribedDevices 字段 → [],无 wechatOpenid → null', async () => {
     saveJSON(STORAGE_KEYS.receivers, [{ id: 'rcv-1', name: '老数据', phone: '13800000000' }])
     await expect(configApi.getReceivers()).resolves.toEqual([
-      { id: 'rcv-1', name: '老数据', phone: '13800000000', subscribedDevices: [] },
+      { id: 'rcv-1', name: '老数据', phone: '13800000000', subscribedDevices: [], wechatOpenid: null },
     ])
   })
 })

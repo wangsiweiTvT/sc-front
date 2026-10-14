@@ -22,18 +22,29 @@ export const configApi = {
   },
 
   async getReceivers(): Promise<Receiver[]> {
-    // 兜底:三期之前的 localStorage 旧数据没有 subscribedDevices 字段
+    // 兜底:三期之前的 localStorage 旧数据没有 subscribedDevices 字段,四期之前没有 wechatOpenid
     if (useMock) {
       return loadJSON<Receiver[]>(STORAGE_KEYS.receivers, []).map((r) => ({
         ...r,
         subscribedDevices: r.subscribedDevices ?? [],
+        wechatOpenid: r.wechatOpenid ?? null,
       }))
     }
     return request<Receiver[]>('/api/receivers')
   },
 
-  async addReceiver(input: { name: string; phone: string; subscribedDevices?: DeviceId[] }): Promise<Receiver> {
-    const body = { name: input.name, phone: input.phone, subscribedDevices: input.subscribedDevices ?? [] }
+  async addReceiver(input: {
+    name: string
+    phone: string
+    subscribedDevices?: DeviceId[]
+    wechatOpenid?: string | null
+  }): Promise<Receiver> {
+    const body = {
+      name: input.name,
+      phone: input.phone,
+      subscribedDevices: input.subscribedDevices ?? [],
+      wechatOpenid: input.wechatOpenid ?? null,
+    }
     if (useMock) {
       receiverSeq += 1
       const r: Receiver = { id: `rcv-${Date.now()}-${receiverSeq}`, ...body }
@@ -53,7 +64,13 @@ export const configApi = {
     }
     await request<void>(`/api/receivers/${receiver.id}`, {
       method: 'PUT',
-      body: { name: receiver.name, phone: receiver.phone, subscribedDevices: receiver.subscribedDevices },
+      // 四期 §9:wechatOpenid 必传可空(清空传 null),漏了后端 422
+      body: {
+        name: receiver.name,
+        phone: receiver.phone,
+        subscribedDevices: receiver.subscribedDevices,
+        wechatOpenid: receiver.wechatOpenid,
+      },
     })
   },
 

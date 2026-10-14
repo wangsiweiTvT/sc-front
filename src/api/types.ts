@@ -54,6 +54,8 @@ export interface Receiver {
   phone: string
   /** 三期 §8:接收人只收所订阅设备的告警短信(显式订阅才收,不订阅 = 收不到) */
   subscribedDevices: DeviceId[]
+  /** 四期 §9:微信测试号渠道 openid;未配为 null(该渠道对此人发送判失败,不影响他人与告警落库) */
+  wechatOpenid: string | null
 }
 
 export interface SmsInfo {

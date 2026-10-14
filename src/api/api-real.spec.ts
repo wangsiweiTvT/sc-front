@@ -151,41 +151,50 @@ describe('VITE_USE_MOCK=false 时的真实分支接线', () => {
   it('configApi.getThresholds 透传 camelCase;addReceiver POST {name, phone} 返回服务端 id', async () => {
     const fetchMock = fetchOf(async () => jsonResponse({}))
       .mockResolvedValueOnce(jsonResponse([{ deviceId: 'Di-Jiu-Shui-Chang-1', paramKey: 'Vf', low: 5, high: 35, enabled: true }]))
-      .mockResolvedValueOnce(jsonResponse({ id: 'rcv-ab12cd34', name: '张工', phone: '13800000000', subscribedDevices: [] }))
+      .mockResolvedValueOnce(jsonResponse({ id: 'rcv-ab12cd34', name: '张工', phone: '13800000000', subscribedDevices: [], wechatOpenid: null }))
     vi.stubGlobal('fetch', fetchMock)
     const { configApi } = await importReal(() => import('./configApi'))
     await expect(configApi.getThresholds()).resolves.toEqual([
       { deviceId: 'Di-Jiu-Shui-Chang-1', paramKey: 'Vf', low: 5, high: 35, enabled: true },
     ])
     await expect(configApi.addReceiver({ name: '张工', phone: '13800000000' })).resolves.toEqual({
-      id: 'rcv-ab12cd34', name: '张工', phone: '13800000000', subscribedDevices: [],
+      id: 'rcv-ab12cd34', name: '张工', phone: '13800000000', subscribedDevices: [], wechatOpenid: null,
     })
     expect(JSON.parse((fetchMock.mock.calls[1]![1] as RequestInit).body as string)).toEqual({
-      name: '张工', phone: '13800000000', subscribedDevices: [],
+      name: '张工', phone: '13800000000', subscribedDevices: [], wechatOpenid: null,
     })
   })
 
-  it('configApi 接收人:addReceiver POST 带 subscribedDevices;updateReceiver 全量 PUT /api/receivers/{id}(三期 §8)', async () => {
+  it('configApi 接收人:addReceiver POST 带 subscribedDevices/wechatOpenid;updateReceiver PUT 四字段必传含 wechatOpenid=null(四期 §9)', async () => {
     const fetchMock = fetchOf(async () => jsonResponse({}))
-      .mockResolvedValueOnce(jsonResponse({ id: 'rcv-1', name: '张工', phone: '13800000000', subscribedDevices: ['Di-Jiu-Shui-Chang-1'] }))
-      .mockResolvedValueOnce(jsonResponse({ id: 'rcv-1', name: '张工', phone: '13800000000', subscribedDevices: ['Di-Jiu-Shui-Chang-1', 'Di-Jiu-Shui-Chang-2'] }))
+      .mockResolvedValueOnce(jsonResponse({ id: 'rcv-1', name: '张工', phone: '13800000000', subscribedDevices: ['Di-Jiu-Shui-Chang-1'], wechatOpenid: null }))
+      .mockResolvedValueOnce(jsonResponse({ id: 'rcv-1', name: '张工', phone: '13800000000', subscribedDevices: ['Di-Jiu-Shui-Chang-1', 'Di-Jiu-Shui-Chang-2'], wechatOpenid: 'oXYZ789' }))
+      .mockResolvedValueOnce(jsonResponse({ id: 'rcv-1', name: '张工', phone: '13800000000', subscribedDevices: ['Di-Jiu-Shui-Chang-1', 'Di-Jiu-Shui-Chang-2'], wechatOpenid: null }))
     vi.stubGlobal('fetch', fetchMock)
     const { configApi } = await importReal(() => import('./configApi'))
     await expect(configApi.addReceiver({ name: '张工', phone: '13800000000', subscribedDevices: ['Di-Jiu-Shui-Chang-1'] })).resolves.toEqual({
-      id: 'rcv-1', name: '张工', phone: '13800000000', subscribedDevices: ['Di-Jiu-Shui-Chang-1'],
+      id: 'rcv-1', name: '张工', phone: '13800000000', subscribedDevices: ['Di-Jiu-Shui-Chang-1'], wechatOpenid: null,
     })
     expect(fetchMock.mock.calls[0]![0]).toBe('http://127.0.0.1:8000/api/receivers')
     expect(JSON.parse((fetchMock.mock.calls[0]![1] as RequestInit).body as string)).toEqual({
-      name: '张工', phone: '13800000000', subscribedDevices: ['Di-Jiu-Shui-Chang-1'],
+      name: '张工', phone: '13800000000', subscribedDevices: ['Di-Jiu-Shui-Chang-1'], wechatOpenid: null,
     })
     await configApi.updateReceiver({
-      id: 'rcv-1', name: '张工', phone: '13800000000', subscribedDevices: ['Di-Jiu-Shui-Chang-1', 'Di-Jiu-Shui-Chang-2'],
+      id: 'rcv-1', name: '张工', phone: '13800000000', subscribedDevices: ['Di-Jiu-Shui-Chang-1', 'Di-Jiu-Shui-Chang-2'], wechatOpenid: 'oXYZ789',
     })
-    const [url, init] = fetchMock.mock.calls[1]!
+    let [url, init] = fetchMock.mock.calls[1]!
     expect(url).toBe('http://127.0.0.1:8000/api/receivers/rcv-1')
     expect(init).toMatchObject({ method: 'PUT' })
     expect(JSON.parse((init as RequestInit).body as string)).toEqual({
-      name: '张工', phone: '13800000000', subscribedDevices: ['Di-Jiu-Shui-Chang-1', 'Di-Jiu-Shui-Chang-2'],
+      name: '张工', phone: '13800000000', subscribedDevices: ['Di-Jiu-Shui-Chang-1', 'Di-Jiu-Shui-Chang-2'], wechatOpenid: 'oXYZ789',
+    })
+    // 清空 openid:PUT 体仍四字段齐全,wechatOpenid 传 null(漏字段后端 422)
+    await configApi.updateReceiver({
+      id: 'rcv-1', name: '张工', phone: '13800000000', subscribedDevices: ['Di-Jiu-Shui-Chang-1', 'Di-Jiu-Shui-Chang-2'], wechatOpenid: null,
+    })
+    ;[url, init] = fetchMock.mock.calls[2]!
+    expect(JSON.parse((init as RequestInit).body as string)).toEqual({
+      name: '张工', phone: '13800000000', subscribedDevices: ['Di-Jiu-Shui-Chang-1', 'Di-Jiu-Shui-Chang-2'], wechatOpenid: null,
     })
   })
 })
