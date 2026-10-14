@@ -149,6 +149,12 @@ async function removeReceiver(id: string): Promise<void> {
             <div v-if="row.subscribedDevices.length === 0" class="sc-dim text-xs">未订阅任何设备,将不会收到短信</div>
           </template>
         </el-table-column>
+        <el-table-column label="微信 openid" min-width="150" show-overflow-tooltip>
+          <template #default="{ row }">
+            <span v-if="row.wechatOpenid">{{ row.wechatOpenid }}</span>
+            <span v-else class="sc-dim">未配置</span>
+          </template>
+        </el-table-column>
         <el-table-column label="操作" width="140">
           <template #default="{ row }">
             <el-button size="small" @click="openEdit(row)">编辑</el-button>
