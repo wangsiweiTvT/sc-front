@@ -308,4 +308,5 @@ curl -s http://127.0.0.1:8000/api/thresholds
 **前端需要调整的:**
 
 1. 接收人表单加一个可选输入框「微信 openid」(编辑时回填;清空提交 `null`),可加一句辅助文案:"扫测试号二维码关注后,由管理员在测试号用户列表复制"。
-2. 其余页面不动。
+2. 关注二维码直引此 URL(永久有效,`<img>` 引用即可,无需存图):`https://mp.weixin.qq.com/cgi-bin/showqrcode?ticket=gQEC8TwAAAAAAAAAAS5odHRwOi8vd2VpeGluLnFxLmNvbS9xLzAyWmVncFpnb1plSHIxMDAwME0wN0kAAgTD-85qAwQAAAAA`。放在表单 openid 输入框旁,配文「扫码关注测试号」。
+3. 其余页面不动。
