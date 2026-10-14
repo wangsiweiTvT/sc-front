@@ -181,6 +181,14 @@ async function removeReceiver(id: string): Promise<void> {
         <el-form-item label="微信 openid">
           <el-input v-model="form.wechatOpenid" placeholder="可选;不填则微信渠道无法送达" maxlength="64" />
           <div class="sc-dim w-full text-xs">扫测试号二维码关注后,由管理员在测试号用户列表复制 openid 填入;清空即取消该渠道</div>
+          <div class="mt-3 flex w-full items-center gap-3">
+            <img
+              src="https://mp.weixin.qq.com/cgi-bin/showqrcode?ticket=gQEC8TwAAAAAAAAAAAAAS5odHRwOi8vd2VpeGluLnFxLmNvbS9xLzAyWmVncFpnb1plSHIxMDAwME0wN0kAAgTD-85qAwQAAAAA"
+              alt="微信测试号二维码"
+              class="h-36 w-36 rounded-lg border border-[var(--sc-border)] bg-white"
+            />
+            <span class="sc-dim text-xs">扫码关注测试号，关注后由管理员复制 openid</span>
+          </div>
         </el-form-item>
       </el-form>
       <template #footer>
