@@ -309,4 +309,5 @@ curl -s http://127.0.0.1:8000/api/thresholds
 
 1. 接收人表单加一个可选输入框「微信 openid」(编辑时回填;清空提交 `null`),可加一句辅助文案:"扫测试号二维码关注后,由管理员在测试号用户列表复制"。
 2. 关注二维码直引此 URL(永久有效,`<img>` 引用即可,无需存图):`https://mp.weixin.qq.com/cgi-bin/showqrcode?ticket=gQEC8TwAAAAAAAAAAS5odHRwOi8vd2VpeGluLnFxLmNvbS9xLzAyWmVncFpnb1plSHIxMDAwME0wN0kAAgTD-85qAwQAAAAA`。放在表单 openid 输入框旁,配文「扫码关注测试号」。
-3. 其余页面不动。
+3. **扫码后自动回填 openid(v0.4.1 新增)**:`GET /api/wechat/latest-follower` → `{ "openid": "oXXX" | null, "subscribeTime": 1791947359 | null }`,返回"最新关注且未绑定任何接收人"的关注者(已绑定的排除,管理员自己再扫码不会回填自己;没有未绑定的返回 `openid: null`)。表单打开(二维码展示期间)每 5 秒轮询一次,`openid` 非空即填入输入框、显示「x 分钟前关注」辅助确认、停止轮询;配一个手动刷新按钮兜底。渠道未配置返回 503、微信接口失败返回 502,轮询静默忽略即可。
+4. 其余页面不动。
