@@ -194,12 +194,12 @@ curl -s -X PUT http://127.0.0.1:8000/api/thresholds -H 'Content-Type: applicatio
 
 | 操作 | 约定 |
 |---|---|
-| `GET /api/receivers` | 返回数组 `[{ "id": "rcv-1", "name": "张工", "phone": "13800000000", "subscribedDevices": ["Di-Jiu-Shui-Chang-1"] }]`,可为空;未配置订阅的 `subscribedDevices` 为 `[]` |
-| `POST /api/receivers` | 请求体 `{ "name": "张工", "phone": "13800000000", "subscribedDevices": [...] }`,`subscribedDevices` 可选默认 `[]`;**id 由服务端生成**;返回创建后的完整对象(200/201 均可) |
-| `PUT /api/receivers/{id}` | 三期新增;全量更新 `name` / `phone` / `subscribedDevices`(三字段必传,缺了 422);id 不存在返回 404 |
+| `GET /api/receivers` | 返回数组 `[{ "id": "rcv-1", "name": "张工", "phone": "13800000000", "subscribedDevices": ["Di-Jiu-Shui-Chang-1"], "wechatOpenid": "oXXXX" }]`,可为空;未配置订阅的 `subscribedDevices` 为 `[]`,未配微信的 `wechatOpenid` 为 `null` |
+| `POST /api/receivers` | 请求体 `{ "name": "张工", "phone": "13800000000", "subscribedDevices": [...], "wechatOpenid": "oXXXX" }`,`subscribedDevices` 可选默认 `[]`,`wechatOpenid` 可选默认 `null`;**id 由服务端生成**;返回创建后的完整对象(200/201 均可) |
+| `PUT /api/receivers/{id}` | 三期新增;全量更新 `name` / `phone` / `subscribedDevices` / `wechatOpenid`(**四字段必传**,`wechatOpenid` 可传 `null` 清空;缺了 422);id 不存在返回 404 |
 | `DELETE /api/receivers/{id}` | 删除;响应 `200 {}`;id 不存在也返回 200(幂等) |
 
-手机号校验 `^1\d{10}$`(前端已校验,后端兜底可选);`subscribedDevices` 内设备 id 必须 ∈ `Di-Jiu-Shui-Chang-1..4`,否则 400。样例:
+手机号校验 `^1\d{10}$`(前端已校验,后端兜底可选);`subscribedDevices` 内设备 id 必须 ∈ `Di-Jiu-Shui-Chang-1..4`,否则 400;`wechatOpenid` 为微信测试号用户 openid(见 §9),后端不校验格式。样例:
 
 ```bash
 curl -s -X POST http://127.0.0.1:8000/api/receivers -H 'Content-Type: application/json' -d '{"name":"张工","phone":"13800000000","subscribedDevices":["Di-Jiu-Shui-Chang-1","Di-Jiu-Shui-Chang-2"]}'
@@ -288,3 +288,24 @@ curl -s http://127.0.0.1:8000/api/thresholds
 2. 告警页 / 铃铛 / 阈值页不动。
 
 联调验收建议:两人订阅不同设备 → 调低其中一台某参数上限 → 10 秒内出现 warning,其 `sms.receivers` 只含订阅者;未订阅设备的告警 `sms.status=failed` 且 `sms.receivers` 为空(dryrun 下后端 `logs/detector.log` 可见 `[SMS-dryrun] → 手机号`)。
+
+## 9. 微信测试号告警渠道(2026-10-14)
+
+告警送达渠道新增**微信公众号测试号模板消息**(后端 `SMS_PROVIDER=wechat_sandbox`):告警文案原样发到接收人个人微信(服务号消息形态,有推送提醒)。订阅路由、告警契约、`sms.receivers`(仍为手机号)全部不变,渠道只是"送达方式"。
+
+**契约变更(§4.5 已同步):**
+
+1. `GET /api/receivers` 每项新增 `wechatOpenid: string | null`。
+2. `POST /api/receivers` 入参可选 `wechatOpenid`,默认 `null`。
+3. `PUT /api/receivers/{id}` 的 `wechatOpenid` **必传但可传 `null`**(与其他三字段不同,清空就传 `null`)。
+
+**语义要点:**
+
+- `wechatOpenid` 来自微信测试号管理页「用户列表」:接收人扫测试号二维码关注后,管理员从列表抄 openid 填入。
+- 未配 openid 的接收人,微信渠道下该人的发送判失败(告警仍正常落库,`sms.status=failed`),不影响其他人。
+- 渠道开关在后端 `.env`,前端无感知。
+
+**前端需要调整的:**
+
+1. 接收人表单加一个可选输入框「微信 openid」(编辑时回填;清空提交 `null`),可加一句辅助文案:"扫测试号二维码关注后,由管理员在测试号用户列表复制"。
+2. 其余页面不动。
