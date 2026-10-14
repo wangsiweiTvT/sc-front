@@ -3,11 +3,15 @@ import { alarmApi } from './alarmApi'
 import { configApi } from './configApi'
 import { monitorApi } from './monitorApi'
 import { deviceApi } from './deviceApi'
+import { getLatestFollower, simulateWechatScan } from './wechatApi'
 import { loadJSON, saveJSON, STORAGE_KEYS } from '@/mock/memory'
 import { DEVICES } from '@/config/params'
 import type { AlarmRecord } from './types'
 
-beforeEach(() => localStorage.clear())
+beforeEach(() => {
+  localStorage.clear()
+  simulateWechatScan(null)
+})
 
 describe('configApi', () => {
   it('首次读取返回 24 条默认阈值', async () => {
@@ -84,5 +88,18 @@ describe('monitorApi', () => {
 describe('deviceApi', () => {
   it('getDevices 返回 4 台', async () => {
     expect(await deviceApi.getDevices()).toHaveLength(DEVICES.length)
+  })
+})
+
+describe('wechatApi(四期 §9.3 扫码自动回填,mock 分支)', () => {
+  it('默认无人扫码 → openid/subscribeTime 均 null', async () => {
+    await expect(getLatestFollower()).resolves.toEqual({ openid: null, subscribeTime: null })
+  })
+
+  it('simulateWechatScan 注入后返回注入值;置 null 复位', async () => {
+    simulateWechatScan('oMOCK9', 1_700_000_000)
+    await expect(getLatestFollower()).resolves.toEqual({ openid: 'oMOCK9', subscribeTime: 1_700_000_000 })
+    simulateWechatScan(null)
+    await expect(getLatestFollower()).resolves.toEqual({ openid: null, subscribeTime: null })
   })
 })

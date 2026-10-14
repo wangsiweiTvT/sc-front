@@ -1,10 +1,12 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { onMounted, onUnmounted, ref, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import type { DeviceId, Receiver } from '@/api/types'
 import { useSettingsStore } from '@/stores/settings'
 import { validatePhone, validateThresholdRules } from '@/core/validation'
 import { DEVICES, PARAM_META_MAP } from '@/config/params'
+import { getLatestFollower } from '@/api/wechatApi'
+import { createFollowerPoll, followedAgoText } from '@/core/followerPoll'
 
 const settings = useSettingsStore()
 
@@ -26,6 +28,26 @@ const dialogVisible = ref(false)
 /** 正在编辑的接收人 id;null = 添加模式 */
 const editingId = ref<string | null>(null)
 const form = ref({ name: '', phone: '', subscribedDevices: [] as DeviceId[], wechatOpenid: '' })
+
+/** 扫码自动回填确认提示(四期 §9.3):「x 分钟前关注」;null = 未触发 */
+const followedHint = ref<string | null>(null)
+
+/** 表单打开期间每 5 秒探测最新扫码;仅输入框为空时填入,管理员手动粘过不覆盖 */
+const followerPoll = createFollowerPoll({
+  fetchFollower: getLatestFollower,
+  onFollower: (openid, subscribeTime) => {
+    if (form.value.wechatOpenid.trim()) return
+    form.value.wechatOpenid = openid
+    followedHint.value = followedAgoText(subscribeTime, Date.now())
+  },
+})
+
+watch(dialogVisible, (visible) => {
+  followerPoll.stop()
+  followedHint.value = null
+  if (visible) followerPoll.start()
+})
+onUnmounted(() => followerPoll.stop())
 
 function openAdd(): void {
   editingId.value = null
@@ -180,14 +202,18 @@ async function removeReceiver(id: string): Promise<void> {
         </el-form-item>
         <el-form-item label="微信 openid">
           <el-input v-model="form.wechatOpenid" placeholder="可选;不填则微信渠道无法送达" maxlength="64" />
-          <div class="sc-dim w-full text-xs">扫测试号二维码关注后,由管理员在测试号用户列表复制 openid 填入;清空即取消该渠道</div>
+          <div class="sc-dim w-full text-xs">扫码关注测试号后自动填入(仅输入框为空时;手动粘过不覆盖);也可在测试号用户列表复制 openid 手填;清空即取消该渠道</div>
+          <div v-if="followedHint" class="w-full text-xs text-[var(--sc-online)]">已自动填入:{{ followedHint }},请确认时间对得上再提交</div>
           <div class="mt-3 flex w-full items-center gap-3">
             <img
               src="https://mp.weixin.qq.com/cgi-bin/showqrcode?ticket=gQEC8TwAAAAAAAAAAS5odHRwOi8vd2VpeGluLnFxLmNvbS9xLzAyWmVncFpnb1plSHIxMDAwME0wN0kAAgTD-85qAwQAAAAA"
               alt="微信测试号二维码"
               class="h-36 w-36 rounded-lg border border-[var(--sc-border)] bg-white"
             />
-            <span class="sc-dim text-xs">扫码关注测试号，关注后由管理员复制 openid</span>
+            <div class="flex flex-col items-start gap-2">
+              <span class="sc-dim text-xs">扫码关注测试号，openid 自动填入</span>
+              <el-button size="small" plain @click="followerPoll.refreshNow()">刷新</el-button>
+            </div>
           </div>
         </el-form-item>
       </el-form>

@@ -197,4 +197,15 @@ describe('VITE_USE_MOCK=false 时的真实分支接线', () => {
       name: '张工', phone: '13800000000', subscribedDevices: ['Di-Jiu-Shui-Chang-1', 'Di-Jiu-Shui-Chang-2'], wechatOpenid: null,
     })
   })
+
+  it('wechatApi.getLatestFollower GET /api/wechat/latest-follower 透传契约字段(四期 §9.3)', async () => {
+    const fetchMock = fetchOf(async () => jsonResponse({})).mockResolvedValueOnce(
+      jsonResponse({ openid: 'oREAL1', subscribeTime: 1_791_947_359 }),
+    )
+    vi.stubGlobal('fetch', fetchMock)
+    const { getLatestFollower } = await importReal(() => import('./wechatApi'))
+    await expect(getLatestFollower()).resolves.toEqual({ openid: 'oREAL1', subscribeTime: 1_791_947_359 })
+    expect(fetchMock.mock.calls[0]![0]).toBe('http://127.0.0.1:8000/api/wechat/latest-follower')
+    expect((fetchMock.mock.calls[0]![1] as RequestInit | undefined)?.method ?? 'GET').toBe('GET')
+  })
 })
