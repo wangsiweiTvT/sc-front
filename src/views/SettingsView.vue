@@ -7,6 +7,8 @@ import { validatePhone, validateThresholdRules } from '@/core/validation'
 import { DEVICES, PARAM_META_MAP } from '@/config/params'
 import { getLatestFollower } from '@/api/wechatApi'
 import { followedAgoText } from '@/core/followedAgo'
+/** 测试号二维码按契约 §9.2 的永久 ticket 存为本地资源:内网机器出不了外网也能显示 */
+import wechatQr from '@/assets/devices/wechat-qr.jpg'
 
 const settings = useSettingsStore()
 
@@ -219,7 +221,7 @@ async function removeReceiver(id: string): Promise<void> {
           <div v-if="followedHint" class="w-full text-xs text-[var(--sc-online)]">已填入:{{ followedHint }},请确认时间对得上再提交</div>
           <div class="mt-3 flex w-full items-center gap-3">
             <img
-              src="https://mp.weixin.qq.com/cgi-bin/showqrcode?ticket=gQEC8TwAAAAAAAAAAS5odHRwOi8vd2VpeGluLnFxLmNvbS9xLzAyWmVncFpnb1plSHIxMDAwME0wN0kAAgTD-85qAwQAAAAA"
+              :src="wechatQr"
               alt="微信测试号二维码"
               class="h-36 w-36 rounded-lg border border-[var(--sc-border)] bg-white"
             />
