@@ -35,7 +35,7 @@ const fetchingFollower = ref(false)
 
 /**
  * 手动获取最新关注者 openid(四期 §9.3):扫码关注后由管理员点按钮拉取。
- * 点击即视为明确意图,覆盖输入框现值(含编辑回填的旧 openid);
+ * 仅输入框为空时填入,已有值(手动粘贴/编辑回填)不覆盖;
  * 暂无新关注/接口失败给出提示,不再后台轮询。
  */
 async function fetchFollower(): Promise<void> {
@@ -45,6 +45,10 @@ async function fetchFollower(): Promise<void> {
     const r = await getLatestFollower()
     if (!r.openid) {
       ElMessage.info('暂无新关注——扫码关注测试号后再点获取')
+      return
+    }
+    if (form.value.wechatOpenid.trim()) {
+      ElMessage.info('输入框已有 openid,未覆盖;要换人请先清空再获取')
       return
     }
     form.value.wechatOpenid = r.openid
