@@ -1,12 +1,12 @@
 <script setup lang="ts">
-import { onMounted, onUnmounted, ref, watch } from 'vue'
+import { onMounted, ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import type { DeviceId, Receiver } from '@/api/types'
 import { useSettingsStore } from '@/stores/settings'
 import { validatePhone, validateThresholdRules } from '@/core/validation'
 import { DEVICES, PARAM_META_MAP } from '@/config/params'
 import { getLatestFollower } from '@/api/wechatApi'
-import { createFollowerPoll, followedAgoText } from '@/core/followerPoll'
+import { followedAgoText } from '@/core/followedAgo'
 
 const settings = useSettingsStore()
 
@@ -29,29 +29,37 @@ const dialogVisible = ref(false)
 const editingId = ref<string | null>(null)
 const form = ref({ name: '', phone: '', subscribedDevices: [] as DeviceId[], wechatOpenid: '' })
 
-/** 扫码自动回填确认提示(四期 §9.3):「x 分钟前关注」;null = 未触发 */
+/** 获取最新关注的确认提示(四期 §9.3):「x 分钟前关注」;null = 未获取 */
 const followedHint = ref<string | null>(null)
+const fetchingFollower = ref(false)
 
-/** 表单打开期间每 5 秒探测最新扫码;仅输入框为空时填入,管理员手动粘过不覆盖 */
-const followerPoll = createFollowerPoll({
-  fetchFollower: getLatestFollower,
-  onFollower: (openid, subscribeTime) => {
-    if (form.value.wechatOpenid.trim()) return
-    form.value.wechatOpenid = openid
-    followedHint.value = followedAgoText(subscribeTime, Date.now())
-  },
-})
-
-watch(dialogVisible, (visible) => {
-  followerPoll.stop()
-  followedHint.value = null
-  if (visible) followerPoll.start()
-})
-onUnmounted(() => followerPoll.stop())
+/**
+ * 手动获取最新关注者 openid(四期 §9.3):扫码关注后由管理员点按钮拉取。
+ * 点击即视为明确意图,覆盖输入框现值(含编辑回填的旧 openid);
+ * 暂无新关注/接口失败给出提示,不再后台轮询。
+ */
+async function fetchFollower(): Promise<void> {
+  if (fetchingFollower.value) return
+  fetchingFollower.value = true
+  try {
+    const r = await getLatestFollower()
+    if (!r.openid) {
+      ElMessage.info('暂无新关注——扫码关注测试号后再点获取')
+      return
+    }
+    form.value.wechatOpenid = r.openid
+    followedHint.value = followedAgoText(r.subscribeTime, Date.now())
+  } catch {
+    ElMessage.error('获取失败:微信渠道未配置或接口异常,请稍后再试')
+  } finally {
+    fetchingFollower.value = false
+  }
+}
 
 function openAdd(): void {
   editingId.value = null
   form.value = { name: '', phone: '', subscribedDevices: [], wechatOpenid: '' }
+  followedHint.value = null
   dialogVisible.value = true
 }
 
@@ -64,6 +72,7 @@ function openEdit(row: Receiver): void {
     subscribedDevices: [...row.subscribedDevices],
     wechatOpenid: row.wechatOpenid ?? '',
   }
+  followedHint.value = null
   dialogVisible.value = true
 }
 
@@ -202,8 +211,8 @@ async function removeReceiver(id: string): Promise<void> {
         </el-form-item>
         <el-form-item label="微信 openid">
           <el-input v-model="form.wechatOpenid" placeholder="可选;不填则微信渠道无法送达" maxlength="64" />
-          <div class="sc-dim w-full text-xs">扫码关注测试号后自动填入(仅输入框为空时;手动粘过不覆盖);也可在测试号用户列表复制 openid 手填;清空即取消该渠道</div>
-          <div v-if="followedHint" class="w-full text-xs text-[var(--sc-online)]">已自动填入:{{ followedHint }},请确认时间对得上再提交</div>
+          <div class="sc-dim w-full text-xs">扫码关注测试号后点「获取最新关注」自动填入;也可在测试号用户列表复制 openid 手填;清空即取消该渠道</div>
+          <div v-if="followedHint" class="w-full text-xs text-[var(--sc-online)]">已填入:{{ followedHint }},请确认时间对得上再提交</div>
           <div class="mt-3 flex w-full items-center gap-3">
             <img
               src="https://mp.weixin.qq.com/cgi-bin/showqrcode?ticket=gQEC8TwAAAAAAAAAAS5odHRwOi8vd2VpeGluLnFxLmNvbS9xLzAyWmVncFpnb1plSHIxMDAwME0wN0kAAgTD-85qAwQAAAAA"
@@ -211,8 +220,8 @@ async function removeReceiver(id: string): Promise<void> {
               class="h-36 w-36 rounded-lg border border-[var(--sc-border)] bg-white"
             />
             <div class="flex flex-col items-start gap-2">
-              <span class="sc-dim text-xs">扫码关注测试号，openid 自动填入</span>
-              <el-button size="small" plain @click="followerPoll.refreshNow()">刷新</el-button>
+              <span class="sc-dim text-xs">扫码关注测试号，关注后点下方按钮获取 openid</span>
+              <el-button size="small" type="primary" plain :loading="fetchingFollower" @click="fetchFollower">获取最新关注</el-button>
             </div>
           </div>
         </el-form-item>
