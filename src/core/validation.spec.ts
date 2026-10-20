@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { validatePhone, validateThresholdRules } from './validation'
-import { defaultThresholds } from '@/config/params'
+import { PARAM_META_MAP, defaultThresholds } from '@/config/params'
 
 describe('validateThresholdRules', () => {
   it('全部合法返回 null', () => {
@@ -12,7 +12,7 @@ describe('validateThresholdRules', () => {
     rules[0]!.high = rules[0]!.low
     const msg = validateThresholdRules(rules)!
     expect(msg).toContain('Di-Jiu-Shui-Chang-1')
-    expect(msg).toContain('沉降比')
+    expect(msg).toContain(PARAM_META_MAP[rules[0]!.paramKey].label)
     expect(msg).toContain('小于')
   })
 

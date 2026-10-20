@@ -31,9 +31,6 @@ const statusInfo = computed(() => (props.device ? monitor.state.statuses[props.d
         <el-descriptions-item label="状态">
           <StatusBadge :status="statusInfo?.status ?? 'offline'" />
         </el-descriptions-item>
-        <el-descriptions-item label="型号">{{ device.model }}</el-descriptions-item>
-        <el-descriptions-item label="安装位置">{{ device.location }}</el-descriptions-item>
-        <el-descriptions-item label="投运日期">{{ device.commissionDate }}</el-descriptions-item>
         <el-descriptions-item label="负责人">{{ device.manager }}</el-descriptions-item>
         <el-descriptions-item label="通信方式" :span="2">{{ device.comm }}</el-descriptions-item>
         <el-descriptions-item label="最近上报" :span="2">

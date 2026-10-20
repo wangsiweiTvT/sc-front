@@ -71,14 +71,14 @@
 | `DeviceId` | `device_id` | `Di-Jiu-Shui-Chang-1` … `-4`,与 MQTT client_id 一致 |
 | `params.Vf` | `vf` | 沉降比 % |
 | `params.Sf` | `sf` | 沉降速度 m/h |
-| `params.Fc` | `fc` | 流量 m³/h |
+| `params.Fc` | `fc` | 机加池出水浊度 NTU |
 | `params.pHf` | `phf` | pH |
 | `params.Tf` | `tf` | 温度 ℃ |
-| `params.Cf` | `cf` | 余氯 mg/L |
+| `params.Cf` | `cf` | 反应池污泥浓度 g/L |
 | `timestamp` | `reported_at` | 前端用 epoch 毫秒数;ISO 字符串由前端适配层转换 |
 | — | `settling_ratio` | 前端暂不消费;与 `vf` 的关系请后端确认(见 §2.2) |
 | — | `id`、`received_at` | 前端不消费 |
-| `Device` 静态档案(name/model/location/manager/image 等) | 无 | v1 前端用本地设备档案,**后端不需要提供**;将来要后端管理时扩展 `GET /api/devices` 即可(§4.6) |
+| `Device` 静态档案(manager/comm/image 等) | 无 | v1 前端用本地设备档案,**后端不需要提供**;将来要后端管理时扩展 `GET /api/devices` 即可(§4.6) |
 
 ## 4. 需要后端做的事(汇总)
 
@@ -210,7 +210,7 @@ curl -s -X DELETE http://127.0.0.1:8000/api/receivers/rcv-1
 
 ### 4.6 其余可选
 
-- **设备静态档案**:v1 前端用本地档案(name/model/location/manager/image 等),后端无需提供;将来若要后端管理,在现有 `GET /api/devices` 响应里补静态字段即可,前端届时切换。
+- **设备静态档案**:v1 前端用本地档案(manager/comm/image 等),后端无需提供;将来若要后端管理,在现有 `GET /api/devices` 响应里补静态字段即可,前端届时切换。
 - **演示用离线开关**(已废弃):v1 原为页面"模拟离线"按钮预留,前端已于 2026-10-08 移除该按钮——离线判定完全由"13 分钟无新数据"驱动,无人工入口。后端的空实现接口保留或删除均可,前端不再调用。
 
 ## 5. 验收自测清单(全部通过即对接就绪)

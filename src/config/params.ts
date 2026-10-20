@@ -1,14 +1,14 @@
 import sensorImg from '@/assets/devices/sensor.jpg'
 import type { Device, DeviceId, ParamKey, ParamMeta, ThresholdRule } from '@/api/types'
 
-/** 参数中文含义为暂定设定,纠正时只改本表 */
+/** 参数中文含义为现场口径(2026-10 校正),纠正时只改本表 */
 export const PARAM_METAS: ParamMeta[] = [
-  { key: 'Vf', label: '沉降比', unit: '%', decimals: 1, normal: [8, 25], defaultThreshold: [5, 35], defaultEnabled: true },
   { key: 'Sf', label: '沉降速度', unit: 'm/h', decimals: 2, normal: [0.8, 2.5], defaultThreshold: [0.5, 3.5], defaultEnabled: true },
-  { key: 'Fc', label: '流量', unit: 'm³/h', decimals: 0, normal: [900, 1400], defaultThreshold: [800, 1500], defaultEnabled: true },
-  { key: 'pHf', label: 'pH', unit: '', decimals: 2, normal: [6.8, 7.8], defaultThreshold: [6.5, 8.5], defaultEnabled: true },
+  { key: 'Vf', label: '沉降比', unit: '%', decimals: 1, normal: [8, 25], defaultThreshold: [5, 35], defaultEnabled: true },
+  { key: 'Fc', label: '机加池出水浊度', unit: 'NTU', decimals: 1, normal: [2, 6], defaultThreshold: [1, 10], defaultEnabled: true },
+  { key: 'pHf', label: 'PH', unit: '', decimals: 2, normal: [6.8, 7.8], defaultThreshold: [6.5, 8.5], defaultEnabled: true },
   { key: 'Tf', label: '温度', unit: '℃', decimals: 1, normal: [12, 24], defaultThreshold: [8, 30], defaultEnabled: true },
-  { key: 'Cf', label: '余氯', unit: 'mg/L', decimals: 2, normal: [0.3, 0.8], defaultThreshold: [0.2, 1.0], defaultEnabled: true },
+  { key: 'Cf', label: '反应池污泥浓度', unit: 'g/L', decimals: 2, normal: [2, 6], defaultThreshold: [1, 10], defaultEnabled: true },
 ]
 
 export const PARAM_META_MAP = Object.fromEntries(
@@ -18,23 +18,19 @@ export const PARAM_META_MAP = Object.fromEntries(
 export const DEVICES: Device[] = [
   {
     id: 'Di-Jiu-Shui-Chang-1', clientId: 'Di-Jiu-Shui-Chang-1',
-    model: 'SP-300 多参数水质监测仪', location: '1# 沉淀池', commissionDate: '2025-03-18',
-    comm: 'MQTT · 100.85.44.98:1883', manager: '张工', image: sensorImg,
+    comm: 'MQTT · 100.85.44.98:1883', manager: '王垚', image: sensorImg,
   },
   {
     id: 'Di-Jiu-Shui-Chang-2', clientId: 'Di-Jiu-Shui-Chang-2',
-    model: 'SP-300 多参数水质监测仪', location: '2# 沉淀池', commissionDate: '2025-03-18',
-    comm: 'MQTT · 100.85.44.98:1883', manager: '李工', image: sensorImg,
+    comm: 'MQTT · 100.85.44.98:1883', manager: '王垚', image: sensorImg,
   },
   {
     id: 'Di-Jiu-Shui-Chang-3', clientId: 'Di-Jiu-Shui-Chang-3',
-    model: 'SP-300 多参数水质监测仪', location: '3# 沉淀池', commissionDate: '2025-04-02',
-    comm: 'MQTT · 100.85.44.98:1883', manager: '王工', image: sensorImg,
+    comm: 'MQTT · 100.85.44.98:1883', manager: '王垚', image: sensorImg,
   },
   {
     id: 'Di-Jiu-Shui-Chang-4', clientId: 'Di-Jiu-Shui-Chang-4',
-    model: 'SP-300 多参数水质监测仪', location: '加药间', commissionDate: '2025-04-02',
-    comm: 'MQTT · 100.85.44.98:1883', manager: '赵工', image: sensorImg,
+    comm: 'MQTT · 100.85.44.98:1883', manager: '王垚', image: sensorImg,
   },
 ]
 

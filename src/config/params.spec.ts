@@ -46,4 +46,23 @@ describe('配置元数据不变式', () => {
     expect(DETECTOR_POLL_INTERVAL_MS).toBe(60_000)
     expect(ALARM_MAX_COUNT).toBe(500)
   })
+
+  it('指标名称与单位按现场口径(2026-10 校正):浊度 NTU、污泥浓度 g/L', () => {
+    const byKey = Object.fromEntries(PARAM_METAS.map((m) => [m.key, m]))
+    expect(byKey.Sf).toMatchObject({ label: '沉降速度', unit: 'm/h' })
+    expect(byKey.Vf).toMatchObject({ label: '沉降比', unit: '%' })
+    expect(byKey.Fc).toMatchObject({ label: '机加池出水浊度', unit: 'NTU', decimals: 1, defaultThreshold: [1, 10] })
+    expect(byKey.pHf).toMatchObject({ label: 'PH', unit: '' })
+    expect(byKey.Tf).toMatchObject({ label: '温度', unit: '℃' })
+    expect(byKey.Cf).toMatchObject({ label: '反应池污泥浓度', unit: 'g/L', decimals: 2, defaultThreshold: [1, 10] })
+  })
+
+  it('设备档案不再含型号/安装位置/投运日期;负责人统一王垚', () => {
+    for (const d of DEVICES) {
+      expect(d).not.toHaveProperty('model')
+      expect(d).not.toHaveProperty('location')
+      expect(d).not.toHaveProperty('commissionDate')
+      expect(d.manager).toBe('王垚')
+    }
+  })
 })

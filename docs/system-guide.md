@@ -10,7 +10,7 @@
 
 ```
 4 台传感器设备（Di-Jiu-Shui-Chang-1..4）
-每 13 分钟上报一次 6 参数：Sf 沉降速度 / Vf 沉降比 / Fc 流量 / pHf pH / Tf 温度 / Cf 余氯
+每 13 分钟上报一次 6 参数：Sf 沉降速度 / Vf 沉降比 / Fc 机加池出水浊度 / pHf PH / Tf 温度 / Cf 反应池污泥浓度
         │  MQTT 主题 Chen-Su-Yi/<client_id>
         ▼
    MQTT Broker（:1883）
