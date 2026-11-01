@@ -44,7 +44,7 @@ async function clearAll(): Promise<void> {
         <el-select v-model="filterDevice" placeholder="按设备" clearable class="w-52">
           <el-option v-for="d in DEVICES" :key="d.id" :label="d.clientId" :value="d.id" />
         </el-select>
-        <el-select v-model="filterType" placeholder="按类型" clearable class="w-36">
+        <el-select v-model="filterType" placeholder="按类型" clearable class="w-44">
           <el-option label="超上限" value="high" />
           <el-option label="超下限" value="low" />
           <el-option label="离线" value="offline" />
