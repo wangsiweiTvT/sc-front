@@ -311,3 +311,59 @@ curl -s http://127.0.0.1:8000/api/thresholds
 2. 关注二维码直引此 URL(永久有效,`<img>` 引用即可,无需存图):`https://mp.weixin.qq.com/cgi-bin/showqrcode?ticket=gQEC8TwAAAAAAAAAAS5odHRwOi8vd2VpeGluLnFxLmNvbS9xLzAyWmVncFpnb1plSHIxMDAwME0wN0kAAgTD-85qAwQAAAAA`。放在表单 openid 输入框旁,配文「扫码关注测试号」。
 3. **扫码后自动回填 openid(v0.4.1 新增)**:`GET /api/wechat/latest-follower` → `{ "openid": "oXXX" | null, "subscribeTime": 1791947359 | null }`,返回"最新关注且未绑定任何接收人"的关注者(已绑定的排除,管理员自己再扫码不会回填自己;没有未绑定的返回 `openid: null`)。管理员在用户扫码后点「获取最新关注」按钮拉取,`openid` 非空且输入框为空时填入并显示「x 分钟前关注」辅助确认(已有值不覆盖);`null` 表示暂无新关注。渠道未配置返回 503、微信接口失败返回 502,前端提示失败即可,不做后台轮询。
 4. 其余页面不动。
+
+**模板消息样例（供说明书与验收对照；2026-11-01 改八行全指标）**
+
+模板改为**八行**「静态标签 + 值」，微信后台模板内容照此粘贴（keyword 序号与后端填写一一对应）：
+
+```
+设备：{{keyword1.DATA}}
+沉降速度：{{keyword2.DATA}}
+沉降比：{{keyword3.DATA}}
+机加池出水浊度：{{keyword4.DATA}}
+pH：{{keyword5.DATA}}
+温度：{{keyword6.DATA}}
+反应池污泥浓度：{{keyword7.DATA}}
+异常：{{keyword8.DATA}}
+```
+
+| keyword | 静态标签 | 值（后端填） |
+|---|---|---|
+| keyword1 | 设备 | 设备编号（`Di-Jiu-Shui-Chang-1`） |
+| keyword2 | 沉降速度 | `1.5m/h` |
+| keyword3 | 沉降比 | `19.66%` |
+| keyword4 | 机加池出水浊度 | `9.5NTU` |
+| keyword5 | pH | `7.21` |
+| keyword6 | 温度 | `18.6°C` |
+| keyword7 | 反应池污泥浓度 | `3.2g/L` |
+| keyword8 | 异常 | 触发参数 + 方向 + 阈值；离线为「设备离线 超过13分钟」 |
+
+参数越限（例：Di-Jiu-Shui-Chang-1 沉降比 19.66 低于下限 25）：
+
+```
+设备：Di-Jiu-Shui-Chang-1
+沉降速度：1.5m/h
+沉降比：19.66%
+机加池出水浊度：9.5NTU
+pH：7.21
+温度：18.6°C
+反应池污泥浓度：3.2g/L
+异常：沉降比 低于下限 25
+```
+
+离线（无读数参数填「-」）：
+
+```
+设备：Di-Jiu-Shui-Chang-1
+沉降速度：-
+沉降比：-
+机加池出水浊度：-
+pH：-
+温度：-
+反应池污泥浓度：-
+异常：设备离线 超过13分钟
+```
+
+- 值截断：设备号 ASCII 窄字符放行 20 字，其余行值 ≤16 字，统一深蓝色 `#173177`。
+- 部署联动：后端已按八行填 keyword1~8；**须先在后台建好八行模板并更新 `.env` 的 `WECHAT_TEMPLATE_ID`**，旧四行模板收不到新字段。
+- 参数中文名/单位取自后端 `PARAM_META`；短信文案同步附「全部指标：…」快照。
