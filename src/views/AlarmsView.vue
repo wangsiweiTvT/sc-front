@@ -40,10 +40,11 @@ async function clearAll(): Promise<void> {
   <div>
     <div class="mb-4 flex items-center justify-between">
       <div class="flex items-center gap-3">
-        <el-select v-model="filterDevice" placeholder="全部设备" clearable class="w-52">
+        <span class="sc-dim text-sm">筛选</span>
+        <el-select v-model="filterDevice" placeholder="按设备" clearable class="w-52">
           <el-option v-for="d in DEVICES" :key="d.id" :label="d.clientId" :value="d.id" />
         </el-select>
-        <el-select v-model="filterType" placeholder="全部类型" clearable class="w-36">
+        <el-select v-model="filterType" placeholder="按类型" clearable class="w-36">
           <el-option label="超上限" value="high" />
           <el-option label="超下限" value="low" />
           <el-option label="离线" value="offline" />
